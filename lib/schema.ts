@@ -12,3 +12,14 @@ export const InstitutionSchema = z.object({
   email: z.string().email().nullable(),
   address: z.string().nullable(),
 });
+
+export const TriageResultSchema = z.object({
+  primary_intent: z.string(),
+  urgency: z.enum(['low', 'normal', 'high']),
+  institution_type: z.string(),
+  required_documents: z.array(z.string()),
+  recommended_channel: z.enum(['online', 'telefon', 'fizic']),
+  next_steps: z.array(z.string()),
+  explanation: z.string(),
+  confidence: z.number().min(0).max(1),
+});
