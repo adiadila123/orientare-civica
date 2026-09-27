@@ -39,7 +39,7 @@ describe('InstitutionSchema', () => {
 
 describe('seed data', () => {
   it('includes every core institution code', () => {
-    const seedPath = path.join(process.cwd(), 'supabase', 'seed.sql');
+    const seedPath = path.join(process.cwd(), 'db', 'seed.sql');
     const seed = readFileSync(seedPath, 'utf-8');
     const expectedCodes = ['ANPC', 'ANAF', 'PRIMARIE', 'POLITIE_LOCALA', 'ANRE', 'ANCOM', 'CNAS', 'ITM'];
     for (const code of expectedCodes) {

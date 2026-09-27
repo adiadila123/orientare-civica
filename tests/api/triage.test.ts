@@ -11,8 +11,8 @@ vi.mock('@google/generative-ai', () => ({
   }),
 }));
 
-vi.mock('@/lib/supabase/server', () => ({
-  createServerSupabaseClient: vi.fn().mockReturnValue({}),
+vi.mock('@/lib/db', () => ({
+  createDb: vi.fn().mockReturnValue({}),
 }));
 
 vi.mock('@/lib/institutions', () => ({
