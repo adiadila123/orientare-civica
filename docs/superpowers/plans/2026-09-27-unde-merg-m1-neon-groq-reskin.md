@@ -10,6 +10,14 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-27-unde-merg-v2-roadmap.md` (roadmap and rulings), `.superpowers/sdd/2026-09-27-unde-merg-mvp/stitch-screen-catalog.md` (screens #1–#3 detail, shared-component patterns #1/#3/#7/#17/#18), `unde_merg_public_guide/civic_direction_clarity/DESIGN.md` (full token values).
 
+## Prerequisites (manual — you do these, not the agent)
+
+1. Create a [Neon](https://neon.tech) project. From the Neon Console → Connection Details, copy the pooled connection string → `DATABASE_URL` in `.env.local`.
+2. Get a Groq API key from [console.groq.com/keys](https://console.groq.com/keys) → `GROQ_API_KEY` in `.env.local`.
+3. Apply `db/migrations/0001_init.sql` then `db/seed.sql` against your Neon database (via the Neon SQL Editor, or `psql "$DATABASE_URL" -f db/migrations/0001_init.sql` from a terminal with `psql` installed).
+
+As with v1, every task's automated tests mock Groq/Neon entirely, so `npm test` never needs real credentials — only the manual check in Task 7 Step 9 does.
+
 ## Global Constraints
 
 - All user-facing text is in Romanian, matching the exact copy quoted in this plan (don't paraphrase quoted strings).
