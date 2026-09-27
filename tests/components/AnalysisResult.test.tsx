@@ -58,4 +58,9 @@ describe('AnalysisResult', () => {
       screen.queryByText('Agenția Națională de Administrare Fiscală')
     ).not.toBeInTheDocument();
   });
+
+  it('shows the recommended channel as a badge', () => {
+    render(<AnalysisResult result={baseResult} />);
+    expect(screen.getByText('Online')).toBeInTheDocument();
+  });
 });

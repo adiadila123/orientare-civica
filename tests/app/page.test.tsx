@@ -33,7 +33,7 @@ describe('HomePage', () => {
 
     render(<HomePage />);
     await user.type(screen.getByLabelText('Descrierea problemei'), 'Am o problemă cu ANAF');
-    await user.click(screen.getByRole('button', { name: 'Analizează' }));
+    await user.click(screen.getByRole('button', { name: 'Analizează situația' }));
 
     expect(await screen.findByText(sampleResponse.explanation)).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledWith(
@@ -51,8 +51,25 @@ describe('HomePage', () => {
 
     render(<HomePage />);
     await user.type(screen.getByLabelText('Descrierea problemei'), 'Am o problemă cu ANAF');
-    await user.click(screen.getByRole('button', { name: 'Analizează' }));
+    await user.click(screen.getByRole('button', { name: 'Analizează situația' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Nu am putut analiza problema');
+  });
+
+  it('shows the analysis-progress stepper while loading', async () => {
+    const user = userEvent.setup();
+    let resolveFetch: (value: unknown) => void = () => {};
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockReturnValue(new Promise((resolve) => { resolveFetch = resolve; }))
+    );
+
+    render(<HomePage />);
+    await user.type(screen.getByLabelText('Descrierea problemei'), 'Am o problemă cu ANAF');
+    await user.click(screen.getByRole('button', { name: 'Analizează situația' }));
+
+    expect(screen.getByRole('status', { name: 'Analiză în curs' })).toBeInTheDocument();
+
+    resolveFetch({ ok: true, json: () => Promise.resolve(sampleResponse) });
   });
 });
