@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Institution } from '@/lib/types';
 
@@ -29,6 +30,14 @@ export function InstitutionCard({ institution }: InstitutionCardProps) {
         )}
         {institution.phone && <p>Telefon: {institution.phone}</p>}
         {institution.email && <p>Email: {institution.email}</p>}
+        <p>
+          <Link
+            href={`/institutii/${institution.code.toLowerCase()}`}
+            className="text-secondary underline underline-offset-2"
+          >
+            Vezi ghidul complet
+          </Link>
+        </p>
       </CardContent>
     </Card>
   );
