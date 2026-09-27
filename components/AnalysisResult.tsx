@@ -16,7 +16,12 @@ interface AnalysisResultProps {
 
 export function AnalysisResult({ result }: AnalysisResultProps) {
   return (
-    <div className="space-y-4" aria-label="Rezultatul analizei">
+    <div
+      className="space-y-4"
+      aria-label="Rezultatul analizei"
+      role="region"
+      aria-live="polite"
+    >
       <div className="flex items-center gap-2">
         <Badge>{URGENCY_LABELS[result.urgency]}</Badge>
         {result.confidence < LOW_CONFIDENCE_THRESHOLD && (
@@ -30,8 +35,8 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
         <div>
           <h3 className="font-medium">Documente necesare</h3>
           <ul className="list-disc pl-5">
-            {result.required_documents.map((document) => (
-              <li key={document}>{document}</li>
+            {result.required_documents.map((doc, index) => (
+              <li key={index}>{doc}</li>
             ))}
           </ul>
         </div>
@@ -40,13 +45,21 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
       <div>
         <h3 className="font-medium">Pași următori</h3>
         <ol className="list-decimal pl-5">
-          {result.next_steps.map((step) => (
-            <li key={step}>{step}</li>
+          {result.next_steps.map((step, index) => (
+            <li key={index}>{step}</li>
           ))}
         </ol>
       </div>
 
-      {result.institution && <InstitutionCard institution={result.institution} />}
+      {result.institution ? (
+        <InstitutionCard institution={result.institution} />
+      ) : (
+        <p role="alert">
+          Nu am putut identifica exact instituția potrivită pentru această
+          problemă. Verifică manual sau contactează primăria locală pentru
+          îndrumare.
+        </p>
+      )}
     </div>
   );
 }

@@ -45,4 +45,17 @@ describe('AnalysisResult', () => {
     render(<AnalysisResult result={{ ...baseResult, confidence: 0.9 }} />);
     expect(screen.queryByText('Recomandăm verificare manuală')).not.toBeInTheDocument();
   });
+
+  it('shows a fallback message and no InstitutionCard when institution is null', () => {
+    render(<AnalysisResult result={{ ...baseResult, institution: null }} />);
+
+    expect(
+      screen.getByText(
+        'Nu am putut identifica exact instituția potrivită pentru această problemă. Verifică manual sau contactează primăria locală pentru îndrumare.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Agenția Națională de Administrare Fiscală')
+    ).not.toBeInTheDocument();
+  });
 });
