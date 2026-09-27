@@ -43,4 +43,13 @@ describe('findInstitution', () => {
     const { client } = createFakeSupabase({ data: null, error: { message: 'connection failed' } });
     await expect(findInstitution(client, 'ANPC')).rejects.toThrow('connection failed');
   });
+
+  it('returns null when the matched row fails InstitutionSchema validation', async () => {
+    const invalidRow = { ...sampleInstitution, website_url: 'not-a-url' };
+    const { client } = createFakeSupabase({
+      data: invalidRow as unknown as Institution,
+      error: null,
+    });
+    expect(await findInstitution(client, 'ANPC')).toBeNull();
+  });
 });

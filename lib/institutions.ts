@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { InstitutionSchema } from './schema';
 import type { Institution } from './types';
 
 export async function findInstitution(
@@ -15,5 +16,10 @@ export async function findInstitution(
     throw new Error(`Failed to look up institution: ${error.message}`);
   }
 
-  return (data as Institution | null) ?? null;
+  if (!data) {
+    return null;
+  }
+
+  const parsed = InstitutionSchema.safeParse(data);
+  return parsed.success ? parsed.data : null;
 }
