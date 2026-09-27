@@ -38,6 +38,13 @@ describe('findInstitution', () => {
     const sql = createFakeSql([{ ...sampleInstitution, website_url: 'not-a-url' }]);
     expect(await findInstitution(sql, 'ANPC')).toBeNull();
   });
+
+  it('passes through the M2 guide fields when present on the row', async () => {
+    const sql = createFakeSql([{ ...sampleInstitution, wait_time_minutes: 25, iban: 'RO49AAAA1B31007593840001' }]);
+    const result = await findInstitution(sql, 'anpc');
+    expect(result?.wait_time_minutes).toBe(25);
+    expect(result?.iban).toBe('RO49AAAA1B31007593840001');
+  });
 });
 
 describe('listInstitutions', () => {

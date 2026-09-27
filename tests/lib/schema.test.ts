@@ -35,6 +35,43 @@ describe('InstitutionSchema', () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it('accepts an institution without the M2 guide fields (existing DB rows / fixtures)', () => {
+    const result = InstitutionSchema.safeParse({
+      id: '1',
+      code: 'ANPC',
+      name: 'ANPC',
+      description: null,
+      category: null,
+      website_url: null,
+      contact_form_url: null,
+      phone: null,
+      email: null,
+      address: null,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('parses and keeps the M2 guide fields when present', () => {
+    const result = InstitutionSchema.safeParse({
+      id: '1',
+      code: 'ANAF',
+      name: 'ANAF',
+      description: null,
+      category: null,
+      website_url: null,
+      contact_form_url: null,
+      phone: null,
+      email: null,
+      address: null,
+      associated_court: 'Judecătoria Sectorului 3',
+      iban: 'RO49AAAA1B31007593840001',
+      cod_venit: '20.01.01.01',
+      cui: '22222222',
+      wait_time_minutes: 25,
+    });
+    expect(result.success && result.data.wait_time_minutes).toBe(25);
+  });
 });
 
 describe('seed data', () => {

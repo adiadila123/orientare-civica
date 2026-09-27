@@ -11,6 +11,11 @@ export const InstitutionSchema = z.object({
   phone: z.string().nullable(),
   email: z.string().email().nullable(),
   address: z.string().nullable(),
+  associated_court: z.string().nullable().optional(),
+  iban: z.string().nullable().optional(),
+  cod_venit: z.string().nullable().optional(),
+  cui: z.string().nullable().optional(),
+  wait_time_minutes: z.number().int().nullable().optional(),
 });
 
 export const TriageResultSchema = z.object({
