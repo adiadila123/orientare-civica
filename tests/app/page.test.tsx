@@ -2,8 +2,9 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import HomePage from '@/app/page';
+import type { TriageResponse } from '@/lib/types';
 
-const sampleResponse = {
+const sampleResponse: TriageResponse = {
   primary_intent: 'problema_anaf',
   urgency: 'normal',
   institution_type: 'ANAF',

@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Unde Merg?
 
-## Getting Started
+Aplicație civică în limba română: cetățeanul descrie o problemă în text liber, Gemini o clasifică, iar aplicația afișează instituția publică potrivită, documentele necesare și pașii următori.
 
-First, run the development server:
+Stack: Next.js (App Router, TypeScript), Tailwind CSS, shadcn/ui, Zod, Gemini (`@google/generative-ai`), Supabase (`@supabase/supabase-js` + `@supabase/ssr`), Vitest + Testing Library.
+
+## Configurare
+
+### 1. Variabile de mediu
+
+Creează un fișier `.env.local` în rădăcina proiectului cu:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+GEMINI_API_KEY=your-gemini-key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` și `SUPABASE_SERVICE_ROLE_KEY` se obțin din proiectul tău Supabase, la **Project Settings → API**. `SUPABASE_SERVICE_ROLE_KEY` este secretă — nu o expune niciodată în client.
+- `GEMINI_API_KEY` se obține din [Google AI Studio](https://aistudio.google.com/apikey).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 2. Baza de date
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+În proiectul Supabase, deschide **SQL Editor** și rulează, în ordine:
 
-## Learn More
+1. `supabase/migrations/0001_init.sql` — creează tabelele și politicile de Row Level Security.
+2. `supabase/seed.sql` — populează instituțiile publice de bază (ANPC, ANAF, primărie, poliția locală, ANRE, ANCOM, CNAS, ITM).
 
-To learn more about Next.js, take a look at the following resources:
+### 3. Instalare și rulare
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm install
+npm test
+npm run build
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Aplicația pornește la [http://localhost:3000](http://localhost:3000).
