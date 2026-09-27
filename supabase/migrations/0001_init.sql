@@ -33,3 +33,10 @@ create table cases (
 
 create index cases_session_id_idx on cases (session_id);
 create index cases_status_idx on cases (status);
+
+alter table institutions enable row level security;
+create policy "institutions are publicly readable" on institutions for select using (true);
+
+alter table problem_categories enable row level security;
+
+alter table cases enable row level security;
