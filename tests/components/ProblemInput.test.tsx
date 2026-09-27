@@ -38,4 +38,9 @@ describe('ProblemInput', () => {
     render(<ProblemInput onSubmit={vi.fn()} isLoading />);
     expect(screen.getByRole('button', { name: 'Se analizează...' })).toBeDisabled();
   });
+
+  it('caps the textarea at 2000 characters', () => {
+    render(<ProblemInput onSubmit={vi.fn()} />);
+    expect(screen.getByLabelText('Descrierea problemei')).toHaveAttribute('maxLength', '2000');
+  });
 });

@@ -51,6 +51,14 @@ describe('POST /api/triage', () => {
     expect(response.status).toBe(400);
   });
 
+  it('returns 400 when description exceeds 2000 characters', async () => {
+    const response = await POST(makeRequest({ description: 'a'.repeat(2001) }));
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.error).toBe('description is too long');
+  });
+
   it('returns the triage result merged with the matched institution', async () => {
     generateContentMock.mockResolvedValue({
       response: { text: () => JSON.stringify(validTriageResult) },

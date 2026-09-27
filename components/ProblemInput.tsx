@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
 const QUICK_CATEGORIES = ['Amendă', 'Factură utilități', 'Problemă ANAF', 'Sesizare primărie'];
+const MAX_DESCRIPTION_LENGTH = 2000;
 
 interface ProblemInputProps {
   onSubmit: (description: string) => void;
@@ -28,6 +29,7 @@ export function ProblemInput({ onSubmit, isLoading = false }: ProblemInputProps)
         onChange={(event) => setDescription(event.target.value)}
         placeholder="Descrie problema ta în cuvinte simple..."
         aria-label="Descrierea problemei"
+        maxLength={MAX_DESCRIPTION_LENGTH}
       />
       <div role="group" aria-label="Categorii rapide" className="flex flex-wrap gap-2">
         {QUICK_CATEGORIES.map((category) => (
