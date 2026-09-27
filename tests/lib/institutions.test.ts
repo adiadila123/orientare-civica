@@ -1,14 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { NeonQueryFunction } from '@neondatabase/serverless';
 import { findInstitution } from '@/lib/institutions';
 import type { Institution } from '@/lib/types';
 
-function createFakeSupabase(response: { data: Institution | null; error: { message: string } | null }) {
-  const maybeSingle = vi.fn().mockResolvedValue(response);
-  const eq = vi.fn().mockReturnValue({ maybeSingle });
-  const select = vi.fn().mockReturnValue({ eq });
-  const from = vi.fn().mockReturnValue({ select });
-  return { client: { from } as unknown as SupabaseClient, from, select, eq };
+function createFakeSql(rows: unknown[]) {
+  const sql = vi.fn().mockResolvedValue(rows);
+  return sql as unknown as NeonQueryFunction<false, false>;
 }
 
 const sampleInstitution: Institution = {
@@ -25,31 +22,20 @@ const sampleInstitution: Institution = {
 };
 
 describe('findInstitution', () => {
-  it('returns the matched institution and normalizes the code to uppercase', async () => {
-    const { client, from, select, eq } = createFakeSupabase({ data: sampleInstitution, error: null });
-    const result = await findInstitution(client, 'anpc');
+  it('returns the matched institution', async () => {
+    const sql = createFakeSql([sampleInstitution]);
+    const result = await findInstitution(sql, 'anpc');
     expect(result).toEqual(sampleInstitution);
-    expect(from).toHaveBeenCalledWith('institutions');
-    expect(select).toHaveBeenCalledWith('*');
-    expect(eq).toHaveBeenCalledWith('code', 'ANPC');
+    expect(sql).toHaveBeenCalledTimes(1);
   });
 
   it('returns null when nothing matches', async () => {
-    const { client } = createFakeSupabase({ data: null, error: null });
-    expect(await findInstitution(client, 'necunoscut')).toBeNull();
+    const sql = createFakeSql([]);
+    expect(await findInstitution(sql, 'necunoscut')).toBeNull();
   });
 
-  it('throws when supabase returns an error', async () => {
-    const { client } = createFakeSupabase({ data: null, error: { message: 'connection failed' } });
-    await expect(findInstitution(client, 'ANPC')).rejects.toThrow('connection failed');
-  });
-
-  it('returns null when the matched row fails InstitutionSchema validation', async () => {
-    const invalidRow = { ...sampleInstitution, website_url: 'not-a-url' };
-    const { client } = createFakeSupabase({
-      data: invalidRow as unknown as Institution,
-      error: null,
-    });
-    expect(await findInstitution(client, 'ANPC')).toBeNull();
+  it('returns null when the row fails schema validation', async () => {
+    const sql = createFakeSql([{ ...sampleInstitution, website_url: 'not-a-url' }]);
+    expect(await findInstitution(sql, 'ANPC')).toBeNull();
   });
 });

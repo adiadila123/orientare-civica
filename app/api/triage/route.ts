@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { TriageResultSchema } from '@/lib/schema';
 import { TRIAGE_SYSTEM_PROMPT, extractTriageJson } from '@/lib/gemini';
 import { findInstitution } from '@/lib/institutions';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createDb } from '@/lib/db';
 
 const MAX_DESCRIPTION_LENGTH = 2000;
 
@@ -36,8 +36,8 @@ export async function POST(req: Request) {
     const rawText = result.response.text();
     const parsed = TriageResultSchema.parse(extractTriageJson(rawText));
 
-    const supabase = createServerSupabaseClient();
-    const institution = await findInstitution(supabase, parsed.institution_type);
+    const sql = createDb();
+    const institution = await findInstitution(sql, parsed.institution_type);
 
     return NextResponse.json({ ...parsed, institution });
   } catch (error) {
