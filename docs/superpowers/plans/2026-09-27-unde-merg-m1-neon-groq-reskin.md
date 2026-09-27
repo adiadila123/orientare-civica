@@ -1210,8 +1210,1029 @@ git commit -m "feat: redesign AnalysisResult and wire Header/Footer/AnalysisProg
 
 ---
 
+## Post-final-review addendum (Tasks 8-10)
+
+Added after the whole-branch final review (opus) found two Critical and two Important issues, and after the user directly instructed building the missing pages ("implementa toate paginile necesare") rather than stubbing/descoping them. See `.superpowers/sdd/2026-09-27-unde-merg-m1-neon-groq-reskin/progress.md` for the full review report and rulings.
+
+### Task 8: Fix wave — design-token bridge, dead-code cleanup, test coverage
+
+**Files:**
+- Modify: `app/globals.css`
+- Modify: `components/ui/button.tsx`
+- Modify: `components/Logo.tsx`
+- Modify: `lib/triage.ts`
+- Modify: `tests/lib/triage.test.ts`
+- Modify: `app/layout.tsx`
+- Modify: `tests/api/triage.test.ts`
+
+**Context:** Task 3 replaced the shadcn-scaffolded `@theme inline { --color-primary: var(--primary); ... }` alias bridge with the civic `@theme` token block, but never re-added an alias bridge — so shadcn primitives (`Button`, `Badge`, `Card`, `Textarea`) reference `--color-primary-foreground`, `--color-ring`, `--color-border`, `--color-card`, etc., which now resolve to nothing. Confirmed in the built CSS: the primary CTA's text is unreadable (~1.2:1 contrast) and there is no visible keyboard focus ring anywhere in the app — both violate this plan's own accessibility Global Constraint.
+
+- [ ] **Step 1: Add the missing `@theme inline` alias bridge to `app/globals.css`**
+
+Insert this block immediately after the closing `}` of the existing `@theme { ... }` block (i.e. right before the `:root {` line):
+
+```css
+@theme inline {
+  --color-foreground: var(--color-on-surface);
+  --color-primary-foreground: var(--color-on-primary);
+  --color-secondary-foreground: var(--color-on-secondary);
+  --color-muted: var(--color-surface-container);
+  --color-muted-foreground: var(--color-on-surface-variant);
+  --color-card: var(--color-surface-container-lowest);
+  --color-card-foreground: var(--color-on-surface);
+  --color-destructive: var(--color-error);
+  --color-border: var(--color-outline-variant);
+  --color-input: var(--color-outline-variant);
+  --color-ring: var(--color-secondary);
+}
+```
+
+- [ ] **Step 2: Delete the dead `:root { ... }` and `.dark { ... }` blocks from `app/globals.css`**
+
+These are the two blocks immediately following the new `@theme inline` block (the ones starting `--background: oklch(1 0 0);` and `--foreground: oklch(0.985 0 0);` respectively) — roughly 70 lines total. They hold bare (non-`--color-`-prefixed) shadcn variables now fully superseded by the alias bridge above; nothing in the app sets a `.dark` class, so removing them changes no current behavior. Leave `@custom-variant dark (&:is(.dark *));` and the `@layer base { ... }` block at the end untouched.
+
+- [ ] **Step 3: Fix `components/ui/button.tsx`'s hover color-mix to use live tokens**
+
+Find this line (the `secondary` button variant):
+```
+"bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+```
+Change `var(--secondary)` → `var(--color-secondary)` and `var(--foreground)` → `var(--color-foreground)` (the bare names no longer resolve to anything after Step 2 — this variant isn't used yet in app code, but leaving it referencing dead variables is a landmine for whoever uses it next):
+```
+"bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--color-secondary),var(--color-foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+```
+
+- [ ] **Step 4: Fix `components/Logo.tsx`'s conflicting font-weight utility**
+
+The subtitle span combines `text-label-sm` (whose token sets `font-weight: 700`) with a `font-medium` class that overrides it to 500. Remove `font-medium`:
+```tsx
+<span className="font-label-sm text-label-sm text-on-surface-variant">
+```
+
+- [ ] **Step 5: Run the full suite and build to confirm the CSS/token fix introduces no regressions**
+
+Run: `npm test`
+Expected: all existing tests still pass (this is a pure CSS/token change, no component behavior changes).
+
+Run: `npm run build`
+Expected: succeeds with no type errors.
+
+- [ ] **Step 6: Rename the stale Gemini reference**
+
+In `lib/triage.ts`, change:
+```typescript
+throw new Error('No JSON object found in Gemini response');
+```
+to:
+```typescript
+throw new Error('No JSON object found in Groq response');
+```
+In `tests/lib/triage.test.ts`, update the matching assertion string from `'No JSON object found in Gemini response'` to `'No JSON object found in Groq response'`.
+
+- [ ] **Step 7: Remove the unused Material Symbols font link**
+
+In `app/layout.tsx`, no component uses `material-symbols-outlined` classes (M1's icons are emoji and a `✓` character) — the font link only costs a render-blocking request and produces 2 lint warnings. Remove the `<head>` element entirely (it currently contains only this one `<link>`):
+```tsx
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+          rel="stylesheet"
+        />
+      </head>
+```
+becomes: delete this whole block, so `<html>` goes straight to `<body>`.
+
+- [ ] **Step 8: Add 4 test-coverage cases to `tests/api/triage.test.ts`**
+
+Add inside the existing `describe('POST /api/triage', ...)` block:
+
+```typescript
+  it('returns 500 when GROQ_API_KEY is missing', async () => {
+    delete process.env.GROQ_API_KEY;
+
+    const response = await POST(makeRequest({ description: 'Am o problemă cu ANAF' }));
+    expect(response.status).toBe(500);
+  });
+
+  it('sends the user description to Groq in the user message', async () => {
+    createCompletionMock.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(validTriageResult) } }],
+    });
+    vi.mocked(findInstitution).mockResolvedValue(null);
+
+    await POST(makeRequest({ description: 'Am o problemă cu declarația fiscală' }));
+
+    expect(createCompletionMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            role: 'user',
+            content: expect.stringContaining('Am o problemă cu declarația fiscală'),
+          }),
+        ]),
+      })
+    );
+  });
+
+  it('passes the parsed institution_type to findInstitution', async () => {
+    createCompletionMock.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(validTriageResult) } }],
+    });
+    vi.mocked(findInstitution).mockResolvedValue(null);
+
+    await POST(makeRequest({ description: 'Am o problemă cu declarația fiscală' }));
+
+    expect(findInstitution).toHaveBeenCalledWith(expect.anything(), validTriageResult.institution_type);
+  });
+
+  it('returns institution: null end-to-end when no match is found', async () => {
+    createCompletionMock.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(validTriageResult) } }],
+    });
+    vi.mocked(findInstitution).mockResolvedValue(null);
+
+    const response = await POST(makeRequest({ description: 'Am o problemă cu declarația fiscală' }));
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.institution).toBeNull();
+  });
+```
+
+- [ ] **Step 9: Run the full suite and build one more time**
+
+Run: `npm test`
+Expected: all test files pass (4 more tests than before).
+
+Run: `npm run build`
+Expected: succeeds with no type errors.
+
+- [ ] **Step 10: Manual visual check (recommended, not required for automated tests to pass)**
+
+Run `npm run dev`, open `http://localhost:3000`, and confirm: the "Analizează situația" button text is clearly readable (white on navy), and pressing Tab shows a visible focus ring on the textarea/button/nav links.
+
+- [ ] **Step 11: Commit**
+
+```bash
+git add app/globals.css components/ui/button.tsx components/Logo.tsx lib/triage.ts tests/lib/triage.test.ts app/layout.tsx tests/api/triage.test.ts
+git commit -m "fix: restore shadcn color-alias bridge, remove dead theme/font cruft, add triage route test coverage"
+```
+
+---
+
+### Task 9: Trust indicators + "Cum funcționează" panel
+
+**Files:**
+- Create: `components/HowItWorks.tsx`
+- Create: `tests/components/HowItWorks.test.tsx`
+- Create: `app/cum-functioneaza/page.tsx`
+- Create: `tests/app/cum-functioneaza.test.tsx`
+- Modify: `app/page.tsx`
+- Modify: `tests/app/page.test.tsx`
+
+**Context:** Global Constraints name "trust indicators" and "the 'how it works' panel" as explicitly in-scope for M1 (screens #1-3), but no task built them — `app/page.tsx`'s right column currently renders nothing until the user submits. The catalog describes screen #1's mobile variant as showing a "Cum funcționează" 3-4-step explainer in place of results before submission; this task builds that as a shared component used both as the page's idle state (all viewports, simpler than replicating desktop/mobile divergent behavior) and as a standalone page for the Header's `/cum-functioneaza` nav link.
+
+- [ ] **Step 1: Write `tests/components/HowItWorks.test.tsx`**
+
+```tsx
+import { describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { HowItWorks } from '@/components/HowItWorks';
+
+describe('HowItWorks', () => {
+  it('renders the heading and all three steps', () => {
+    render(<HowItWorks />);
+    expect(screen.getByText('Cum funcționează')).toBeInTheDocument();
+    expect(screen.getByText(/Descrii problema ta/)).toBeInTheDocument();
+    expect(screen.getByText(/Inteligența artificială analizează/)).toBeInTheDocument();
+    expect(screen.getByText(/Primești instituția potrivită/)).toBeInTheDocument();
+  });
+});
+```
+
+- [ ] **Step 2: Run the test and verify it fails**
+
+Run: `npm test -- tests/components/HowItWorks.test.tsx`
+Expected: FAIL — `@/components/HowItWorks` does not exist yet.
+
+- [ ] **Step 3: Create `components/HowItWorks.tsx`**
+
+```tsx
+const HOW_IT_WORKS_STEPS = [
+  'Descrii problema ta în cuvinte simple, fără termeni juridici.',
+  'Inteligența artificială analizează situația și identifică domeniul potrivit.',
+  'Primești instituția potrivită, documentele necesare și pașii următori.',
+];
+
+export function HowItWorks() {
+  return (
+    <div className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+      <h2 className="font-title-md text-title-md text-on-surface">Cum funcționează</h2>
+      <ol className="flex flex-col gap-space-sm">
+        {HOW_IT_WORKS_STEPS.map((step, index) => (
+          <li key={step} className="flex items-center gap-space-sm">
+            <span className="w-6 h-6 rounded-full bg-secondary text-on-secondary text-label-sm font-label-sm flex items-center justify-center shrink-0">
+              {index + 1}
+            </span>
+            <span className="font-body-sm text-body-sm text-on-surface">{step}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 4: Run the test and verify it passes**
+
+Run: `npm test -- tests/components/HowItWorks.test.tsx`
+Expected: PASS, 1 test.
+
+- [ ] **Step 5: Wire the trust-indicator row and `HowItWorks` into `app/page.tsx`**
+
+Add a trust-indicator row below the hero subtitle, and render `<HowItWorks />` in the right column whenever there's no loading/error/result state (the idle state). Full updated component:
+
+```tsx
+'use client';
+
+import { useState } from 'react';
+import { ProblemInput } from '@/components/ProblemInput';
+import { AnalysisResult } from '@/components/AnalysisResult';
+import { AnalysisProgress } from '@/components/AnalysisProgress';
+import { HowItWorks } from '@/components/HowItWorks';
+import type { TriageResponse } from '@/lib/types';
+
+const TRUST_INDICATORS = ['100% Gratuit', 'Fără cont necesar', 'Confidențial'];
+
+export default function HomePage() {
+  const [result, setResult] = useState<TriageResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(description: string) {
+    setIsLoading(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const response = await fetch('/api/triage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description }),
+      });
+
+      if (!response.ok) {
+        throw new Error('request-failed');
+      }
+
+      const data = (await response.json()) as TriageResponse;
+      setResult(data);
+    } catch {
+      setError('Nu am putut analiza problema. Încearcă din nou.');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-margin py-space-xl">
+      <section className="text-center flex flex-col items-center mb-space-xl">
+        <h1 className="font-display text-display text-on-surface max-w-4xl">
+          Nu știi unde să te adresezi?{' '}
+          <span className="text-secondary">Spune-ne problema ta.</span>
+        </h1>
+        <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mt-space-sm">
+          Descrie situația ta în cuvinte simple și te direcționăm către instituția potrivită, cu
+          documentele și pașii necesari.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-space-sm mt-space-md">
+          {TRUST_INDICATORS.map((indicator) => (
+            <span
+              key={indicator}
+              className="font-label-md text-label-md text-on-surface-variant bg-surface-container-low rounded-full px-space-sm py-1"
+            >
+              {indicator}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+        <div className="lg:col-span-5 bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+          <ProblemInput onSubmit={handleSubmit} isLoading={isLoading} />
+        </div>
+        <div className="lg:col-span-7">
+          {!isLoading && !error && !result && <HowItWorks />}
+          {isLoading && <AnalysisProgress />}
+          {error && (
+            <p role="alert" className="font-body-sm text-body-sm text-error">
+              {error}
+            </p>
+          )}
+          {result && <AnalysisResult result={result} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 6: Add a page-level test asserting the idle state, and update `tests/app/page.test.tsx`**
+
+Add this test to the existing `describe('HomePage', ...)` block:
+
+```typescript
+  it('shows the how-it-works panel before any submission', () => {
+    render(<HomePage />);
+    expect(screen.getByText('Cum funcționează')).toBeInTheDocument();
+  });
+```
+
+- [ ] **Step 7: Run the page tests and verify everything passes**
+
+Run: `npm test -- tests/app/page.test.tsx`
+Expected: PASS, 5 tests (4 existing + 1 new).
+
+- [ ] **Step 8: Write `tests/app/cum-functioneaza.test.tsx`**
+
+```tsx
+import { describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import CumFunctioneazaPage from '@/app/cum-functioneaza/page';
+
+describe('CumFunctioneazaPage', () => {
+  it('renders the page heading and the how-it-works steps', () => {
+    render(<CumFunctioneazaPage />);
+    expect(screen.getByRole('heading', { name: 'Cum funcționează Unde Merg?' })).toBeInTheDocument();
+    expect(screen.getByText('Cum funcționează')).toBeInTheDocument();
+  });
+});
+```
+
+- [ ] **Step 9: Run the test and verify it fails**
+
+Run: `npm test -- tests/app/cum-functioneaza.test.tsx`
+Expected: FAIL — `@/app/cum-functioneaza/page` does not exist yet.
+
+- [ ] **Step 10: Create `app/cum-functioneaza/page.tsx`**
+
+```tsx
+import { HowItWorks } from '@/components/HowItWorks';
+
+export default function CumFunctioneazaPage() {
+  return (
+    <div className="max-w-3xl mx-auto px-margin py-space-xl flex flex-col gap-space-lg">
+      <h1 className="font-headline-lg text-headline-lg text-on-surface">Cum funcționează Unde Merg?</h1>
+      <p className="font-body-lg text-body-lg text-on-surface-variant">
+        Unde Merg? te ajută să afli rapid la ce instituție publică trebuie să te adresezi pentru
+        problema ta, fără să cauți singur prin zeci de site-uri guvernamentale.
+      </p>
+      <HowItWorks />
+    </div>
+  );
+}
+```
+
+- [ ] **Step 11: Run the test and verify it passes**
+
+Run: `npm test -- tests/app/cum-functioneaza.test.tsx`
+Expected: PASS, 1 test.
+
+- [ ] **Step 12: Run the full suite and build**
+
+Run: `npm test`
+Expected: all test files pass.
+
+Run: `npm run build`
+Expected: succeeds with no type errors (a new static route `/cum-functioneaza` is emitted).
+
+- [ ] **Step 13: Commit**
+
+```bash
+git add components/HowItWorks.tsx tests/components/HowItWorks.test.tsx app/cum-functioneaza tests/app/cum-functioneaza.test.tsx app/page.tsx tests/app/page.test.tsx
+git commit -m "feat: add trust indicators, how-it-works panel, and /cum-functioneaza page"
+```
+
+---
+
+### Task 10: Institutions catalog page + FAQ page
+
+**Files:**
+- Modify: `lib/institutions.ts`
+- Modify: `tests/lib/institutions.test.ts`
+- Create: `app/institutii/page.tsx`
+- Create: `tests/app/institutii.test.tsx`
+- Create: `app/intrebari-frecvente/page.tsx`
+- Create: `tests/app/intrebari-frecvente.test.tsx`
+
+**Context:** The Header's remaining two dead nav links. `/institutii` needs a real (if basic) institution listing — this is a cut-down version of M2's fuller manual-catalog screen (#4, which adds search/filter/category grouping); M1's version is a plain list using the institution data and `InstitutionCard` that already exist, so M2 can layer search/filter on top rather than building the page from scratch. `/intrebari-frecvente` is static content, no DB.
+
+- [ ] **Step 1: Write a failing test for `listInstitutions` in `tests/lib/institutions.test.ts`**
+
+Add this `describe` block to the existing file (keep the existing `findInstitution` tests untouched):
+
+```typescript
+describe('listInstitutions', () => {
+  it('returns every institution parsed from the rows', async () => {
+    const sql = createFakeSql([sampleInstitution]);
+    const result = await listInstitutions(sql);
+    expect(result).toEqual([sampleInstitution]);
+  });
+
+  it('filters out rows that fail schema validation', async () => {
+    const sql = createFakeSql([sampleInstitution, { ...sampleInstitution, website_url: 'not-a-url' }]);
+    const result = await listInstitutions(sql);
+    expect(result).toEqual([sampleInstitution]);
+  });
+});
+```
+
+Add `listInstitutions` to the existing import line: `import { findInstitution, listInstitutions } from '@/lib/institutions';`
+
+- [ ] **Step 2: Run the test and verify it fails**
+
+Run: `npm test -- tests/lib/institutions.test.ts`
+Expected: FAIL — `listInstitutions` is not exported yet.
+
+- [ ] **Step 3: Add `listInstitutions` to `lib/institutions.ts`**
+
+```typescript
+export async function listInstitutions(
+  sql: NeonQueryFunction<false, false>
+): Promise<Institution[]> {
+  const rows = await sql`SELECT * FROM institutions ORDER BY name`;
+  return rows
+    .map((row) => InstitutionSchema.safeParse(row))
+    .filter((result): result is { success: true; data: Institution } => result.success)
+    .map((result) => result.data);
+}
+```
+
+- [ ] **Step 4: Run the test and verify it passes**
+
+Run: `npm test -- tests/lib/institutions.test.ts`
+Expected: PASS, 5 tests (3 existing `findInstitution` + 2 new `listInstitutions`).
+
+- [ ] **Step 5: Write `tests/app/institutii.test.tsx`**
+
+```tsx
+import { describe, expect, it, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+
+vi.mock('@/lib/db', () => ({
+  createDb: vi.fn().mockReturnValue({}),
+}));
+
+vi.mock('@/lib/institutions', () => ({
+  listInstitutions: vi.fn(),
+}));
+
+import InstitutiiPage from '@/app/institutii/page';
+import { listInstitutions } from '@/lib/institutions';
+
+describe('InstitutiiPage', () => {
+  it('renders every institution returned by listInstitutions', async () => {
+    vi.mocked(listInstitutions).mockResolvedValue([
+      {
+        id: '1',
+        code: 'ANAF',
+        name: 'Agenția Națională de Administrare Fiscală',
+        description: null,
+        category: 'fiscal',
+        website_url: 'https://www.anaf.ro',
+        contact_form_url: null,
+        phone: null,
+        email: null,
+        address: null,
+      },
+    ]);
+
+    render(await InstitutiiPage());
+
+    expect(screen.getByText('Agenția Națională de Administrare Fiscală')).toBeInTheDocument();
+  });
+});
+```
+
+- [ ] **Step 6: Run the test and verify it fails**
+
+Run: `npm test -- tests/app/institutii.test.tsx`
+Expected: FAIL — `@/app/institutii/page` does not exist yet.
+
+- [ ] **Step 7: Create `app/institutii/page.tsx`** (an async Server Component — no `'use client'`)
+
+```tsx
+import { createDb } from '@/lib/db';
+import { listInstitutions } from '@/lib/institutions';
+import { InstitutionCard } from '@/components/InstitutionCard';
+
+export default async function InstitutiiPage() {
+  const sql = createDb();
+  const institutions = await listInstitutions(sql);
+
+  return (
+    <div className="max-w-5xl mx-auto px-margin py-space-xl flex flex-col gap-space-lg">
+      <h1 className="font-headline-lg text-headline-lg text-on-surface">Instituții</h1>
+      <p className="font-body-lg text-body-lg text-on-surface-variant">
+        Lista instituțiilor publice către care te putem direcționa.
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+        {institutions.map((institution) => (
+          <InstitutionCard key={institution.code} institution={institution} />
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 8: Run the test and verify it passes**
+
+Run: `npm test -- tests/app/institutii.test.tsx`
+Expected: PASS, 1 test.
+
+- [ ] **Step 9: Write `tests/app/intrebari-frecvente.test.tsx`**
+
+```tsx
+import { describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import IntrebariFrecventePage from '@/app/intrebari-frecvente/page';
+
+describe('IntrebariFrecventePage', () => {
+  it('renders the page heading and all FAQ questions', () => {
+    render(<IntrebariFrecventePage />);
+    expect(screen.getByRole('heading', { name: 'Întrebări frecvente' })).toBeInTheDocument();
+    expect(screen.getByText('Este gratuit acest serviciu?')).toBeInTheDocument();
+    expect(screen.getByText('Ce fac dacă nu găsesc instituția potrivită?')).toBeInTheDocument();
+  });
+});
+```
+
+- [ ] **Step 10: Run the test and verify it fails**
+
+Run: `npm test -- tests/app/intrebari-frecvente.test.tsx`
+Expected: FAIL — `@/app/intrebari-frecvente/page` does not exist yet.
+
+- [ ] **Step 11: Create `app/intrebari-frecvente/page.tsx`**
+
+```tsx
+const FAQ_ITEMS = [
+  {
+    question: 'Este gratuit acest serviciu?',
+    answer: 'Da, Unde Merg? este complet gratuit și nu necesită niciun abonament.',
+  },
+  {
+    question: 'Este nevoie de cont pentru a folosi serviciul?',
+    answer: 'Nu. Poți descrie problema ta și primi o recomandare fără să creezi un cont.',
+  },
+  {
+    question: 'Ce se întâmplă cu datele mele?',
+    answer:
+      'Descrierea problemei este trimisă către un serviciu de inteligență artificială pentru analiză și nu este asociată cu identitatea ta.',
+  },
+  {
+    question: 'Cât de precisă este recomandarea?',
+    answer:
+      'Recomandarea este generată automat pe baza descrierii tale. Pentru cazuri complexe, îți recomandăm să confirmi informațiile direct cu instituția indicată.',
+  },
+  {
+    question: 'Ce fac dacă nu găsesc instituția potrivită?',
+    answer:
+      'Poți contacta linia civică gratuită 0800 008 123 sau te poți adresa primăriei locale pentru îndrumare.',
+  },
+];
+
+export default function IntrebariFrecventePage() {
+  return (
+    <div className="max-w-3xl mx-auto px-margin py-space-xl flex flex-col gap-space-lg">
+      <h1 className="font-headline-lg text-headline-lg text-on-surface">Întrebări frecvente</h1>
+      <dl className="flex flex-col gap-space-md">
+        {FAQ_ITEMS.map((item) => (
+          <div key={item.question} className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+            <dt className="font-title-md text-title-md text-on-surface mb-space-xs">{item.question}</dt>
+            <dd className="font-body-sm text-body-sm text-on-surface-variant">{item.answer}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 12: Run the test and verify it passes**
+
+Run: `npm test -- tests/app/intrebari-frecvente.test.tsx`
+Expected: PASS, 1 test.
+
+- [ ] **Step 13: Run the full suite and build**
+
+Run: `npm test`
+Expected: all test files pass.
+
+Run: `npm run build`
+Expected: succeeds with no type errors (two new static/dynamic routes emitted: `/institutii`, `/intrebari-frecvente`).
+
+- [ ] **Step 14: Commit**
+
+```bash
+git add lib/institutions.ts tests/lib/institutions.test.ts app/institutii tests/app/institutii.test.tsx app/intrebari-frecvente tests/app/intrebari-frecvente.test.tsx
+git commit -m "feat: add institutions catalog page and FAQ page"
+```
+
+---
+
+### Task 11: Consolidated final fix wave — metadata, InstitutionCard styling, mobile footer nav, empty state, FAQ specificity
+
+Added after a second, consolidated final review (opus) of the Tasks 8-10 addendum found 3 Important cross-page findings invisible to per-task review (identical `<title>` on every route; `InstitutionCard`'s website link rendering as unstyled plain text now that it's `/institutii`'s sole call-to-action; three real content pages unreachable on mobile since `Header`'s nav is desktop-only) plus two cheap Minor findings worth folding into the same pass (silent-drop of schema-invalid institution rows with no empty-state message; the FAQ's privacy answer not naming the AI processor). See the ledger for the full report and which Minor findings were deliberately parked instead (dead `font-{name}` growth, container-width inconsistency, loading/error boundaries, a `<StepNumber>` extraction, heading redundancy on `/cum-functioneaza`) — those are lower-value or larger-scope and don't belong in a fix wave.
+
+**Files:**
+- Modify: `components/InstitutionCard.tsx`
+- Create: `tests/components/InstitutionCard.test.tsx`
+- Modify: `lib/institutions.ts`
+- Modify: `tests/lib/institutions.test.ts`
+- Modify: `app/institutii/page.tsx`
+- Modify: `tests/app/institutii.test.tsx`
+- Modify: `app/cum-functioneaza/page.tsx`
+- Modify: `app/intrebari-frecvente/page.tsx`
+- Modify: `components/Footer.tsx`
+- Modify: `tests/components/Footer.test.tsx`
+
+- [ ] **Step 1: Write a failing test for `InstitutionCard`'s link styling**
+
+Create `tests/components/InstitutionCard.test.tsx`:
+
+```tsx
+import { describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { InstitutionCard } from '@/components/InstitutionCard';
+import type { Institution } from '@/lib/types';
+
+const institution: Institution = {
+  id: '1',
+  code: 'ANAF',
+  name: 'Agenția Națională de Administrare Fiscală',
+  description: 'Administrează impozitele și taxele.',
+  category: 'fiscal',
+  website_url: 'https://www.anaf.ro',
+  contact_form_url: null,
+  phone: null,
+  email: null,
+  address: null,
+};
+
+describe('InstitutionCard', () => {
+  it('renders the website link with a visible, styled affordance', () => {
+    render(<InstitutionCard institution={institution} />);
+    const link = screen.getByRole('link', { name: 'https://www.anaf.ro' });
+    expect(link).toHaveClass('underline');
+  });
+});
+```
+
+- [ ] **Step 2: Run the test and verify it fails**
+
+Run: `npm test -- tests/components/InstitutionCard.test.tsx`
+Expected: FAIL — the current `<a>` has no `className`, so `toHaveClass('underline')` fails.
+
+- [ ] **Step 3: Restyle `components/InstitutionCard.tsx` onto civic tokens with a visible link**
+
+```tsx
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { Institution } from '@/lib/types';
+
+interface InstitutionCardProps {
+  institution: Institution;
+}
+
+export function InstitutionCard({ institution }: InstitutionCardProps) {
+  return (
+    <Card className="shadow-sm ring-0">
+      <CardHeader>
+        <CardTitle className="font-title-md text-title-md text-on-surface">
+          {institution.name}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-space-xs font-body-sm text-body-sm text-on-surface-variant">
+        {institution.description && <p>{institution.description}</p>}
+        {institution.website_url && (
+          <p>
+            <a
+              href={institution.website_url}
+              target="_blank"
+              rel="noreferrer"
+              className="text-secondary underline underline-offset-2"
+            >
+              {institution.website_url}
+            </a>
+          </p>
+        )}
+        {institution.phone && <p>Telefon: {institution.phone}</p>}
+        {institution.email && <p>Email: {institution.email}</p>}
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+(`shadow-sm ring-0` overrides the shadcn `Card`'s default `ring-1 ring-foreground/10` with no shadow, matching the `shadow-sm`-with-no-ring treatment every other panel in the app already uses — `HowItWorks`, the FAQ items, `AnalysisResult`'s container.)
+
+- [ ] **Step 4: Run the test and verify it passes**
+
+Run: `npm test -- tests/components/InstitutionCard.test.tsx`
+Expected: PASS, 1 test.
+
+- [ ] **Step 5: Run the existing suite to confirm no regressions from the restyle**
+
+Run: `npm test`
+Expected: all previously-passing tests still pass (this is a styling-only change; no test elsewhere asserts on `InstitutionCard`'s classes or the `Card`'s default ring/shadow).
+
+- [ ] **Step 6: Add a failing test for `listInstitutions` warning on invalid rows**
+
+Add to the existing `describe('listInstitutions', ...)` block in `tests/lib/institutions.test.ts`:
+
+```typescript
+  it('warns when a row fails schema validation', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const sql = createFakeSql([{ ...sampleInstitution, website_url: 'not-a-url' }]);
+
+    await listInstitutions(sql);
+
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+```
+
+- [ ] **Step 7: Run the test and verify it fails**
+
+Run: `npm test -- tests/lib/institutions.test.ts`
+Expected: FAIL — `listInstitutions` doesn't call `console.warn` yet.
+
+- [ ] **Step 8: Update `listInstitutions` in `lib/institutions.ts` to warn on invalid rows**
+
+Replace the function body with:
+
+```typescript
+export async function listInstitutions(
+  sql: NeonQueryFunction<false, false>
+): Promise<Institution[]> {
+  const rows = await sql`SELECT * FROM institutions ORDER BY name`;
+  const institutions: Institution[] = [];
+  for (const row of rows) {
+    const result = InstitutionSchema.safeParse(row);
+    if (result.success) {
+      institutions.push(result.data);
+    } else {
+      console.warn('Skipping institution row that failed schema validation', result.error.message);
+    }
+  }
+  return institutions;
+}
+```
+
+- [ ] **Step 9: Run the test and verify it passes**
+
+Run: `npm test -- tests/lib/institutions.test.ts`
+Expected: PASS, 6 tests (3 `findInstitution` + 3 `listInstitutions`).
+
+- [ ] **Step 10: Write a failing test for `/institutii`'s empty state**
+
+Add to `tests/app/institutii.test.tsx`, inside the existing `describe('InstitutiiPage', ...)` block:
+
+```typescript
+  it('shows a fallback message when no institutions are returned', async () => {
+    vi.mocked(listInstitutions).mockResolvedValue([]);
+
+    render(await InstitutiiPage());
+
+    expect(screen.getByText(/nu este disponibilă momentan/)).toBeInTheDocument();
+  });
+```
+
+- [ ] **Step 11: Run the test and verify it fails**
+
+Run: `npm test -- tests/app/institutii.test.tsx`
+Expected: FAIL — no empty-state branch exists yet.
+
+- [ ] **Step 12: Update `app/institutii/page.tsx` with an empty-state branch and page metadata**
+
+```tsx
+import type { Metadata } from 'next';
+import { createDb } from '@/lib/db';
+import { listInstitutions } from '@/lib/institutions';
+import { InstitutionCard } from '@/components/InstitutionCard';
+
+export const metadata: Metadata = {
+  title: 'Instituții — Unde Merg?',
+  description: 'Lista instituțiilor publice către care Unde Merg? te poate direcționa.',
+};
+
+// Institution data is fetched live from the DB on every request rather than
+// baked into the static shell at build time (which would require DB access
+// during `next build`).
+export const dynamic = 'force-dynamic';
+
+export default async function InstitutiiPage() {
+  const sql = createDb();
+  const institutions = await listInstitutions(sql);
+
+  return (
+    <div className="max-w-5xl mx-auto px-margin py-space-xl flex flex-col gap-space-lg">
+      <h1 className="font-headline-lg text-headline-lg text-on-surface">Instituții</h1>
+      <p className="font-body-lg text-body-lg text-on-surface-variant">
+        Lista instituțiilor publice către care te putem direcționa.
+      </p>
+      {institutions.length === 0 ? (
+        <p className="font-body-sm text-body-sm text-on-surface-variant">
+          Lista instituțiilor nu este disponibilă momentan. Încearcă din nou mai târziu.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+          {institutions.map((institution) => (
+            <InstitutionCard key={institution.code} institution={institution} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+- [ ] **Step 13: Run the test and verify it passes**
+
+Run: `npm test -- tests/app/institutii.test.tsx`
+Expected: PASS, 2 tests.
+
+- [ ] **Step 14: Add metadata to `app/cum-functioneaza/page.tsx`**
+
+```tsx
+import type { Metadata } from 'next';
+import { HowItWorks } from '@/components/HowItWorks';
+
+export const metadata: Metadata = {
+  title: 'Cum funcționează — Unde Merg?',
+  description:
+    'Află în trei pași simpli cum te ajută Unde Merg? să identifici instituția publică potrivită pentru problema ta.',
+};
+
+export default function CumFunctioneazaPage() {
+  return (
+    <div className="max-w-3xl mx-auto px-margin py-space-xl flex flex-col gap-space-lg">
+      <h1 className="font-headline-lg text-headline-lg text-on-surface">Cum funcționează Unde Merg?</h1>
+      <p className="font-body-lg text-body-lg text-on-surface-variant">
+        Unde Merg? te ajută să afli rapid la ce instituție publică trebuie să te adresezi pentru
+        problema ta, fără să cauți singur prin zeci de site-uri guvernamentale.
+      </p>
+      <HowItWorks />
+    </div>
+  );
+}
+```
+
+- [ ] **Step 15: Add metadata to `app/intrebari-frecvente/page.tsx` and name Groq in the privacy answer**
+
+```tsx
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Întrebări frecvente — Unde Merg?',
+  description: 'Răspunsuri la cele mai frecvente întrebări despre Unde Merg?.',
+};
+
+const FAQ_ITEMS = [
+  {
+    question: 'Este gratuit acest serviciu?',
+    answer: 'Da, Unde Merg? este complet gratuit și nu necesită niciun abonament.',
+  },
+  {
+    question: 'Este nevoie de cont pentru a folosi serviciul?',
+    answer: 'Nu. Poți descrie problema ta și primi o recomandare fără să creezi un cont.',
+  },
+  {
+    question: 'Ce se întâmplă cu datele mele?',
+    answer:
+      'Descrierea problemei este trimisă către Groq, un furnizor de inteligență artificială, pentru analiză și nu este asociată cu identitatea ta.',
+  },
+  {
+    question: 'Cât de precisă este recomandarea?',
+    answer:
+      'Recomandarea este generată automat pe baza descrierii tale. Pentru cazuri complexe, îți recomandăm să confirmi informațiile direct cu instituția indicată.',
+  },
+  {
+    question: 'Ce fac dacă nu găsesc instituția potrivită?',
+    answer:
+      'Poți contacta linia civică gratuită 0800 008 123 sau te poți adresa primăriei locale pentru îndrumare.',
+  },
+];
+
+export default function IntrebariFrecventePage() {
+  return (
+    <div className="max-w-3xl mx-auto px-margin py-space-xl flex flex-col gap-space-lg">
+      <h1 className="font-headline-lg text-headline-lg text-on-surface">Întrebări frecvente</h1>
+      <dl className="flex flex-col gap-space-md">
+        {FAQ_ITEMS.map((item) => (
+          <div key={item.question} className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+            <dt className="font-title-md text-title-md text-on-surface mb-space-xs">{item.question}</dt>
+            <dd className="font-body-sm text-body-sm text-on-surface-variant">{item.answer}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 16: Write a failing test for the mobile footer nav**
+
+Add to `tests/components/Footer.test.tsx`, inside the existing `describe('Footer', ...)` block:
+
+```typescript
+  it('renders navigation links to every page', () => {
+    render(<Footer />);
+    expect(screen.getByRole('link', { name: 'Acasă' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Cum funcționează' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Instituții' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Întrebări frecvente' })).toBeInTheDocument();
+  });
+```
+
+- [ ] **Step 17: Run the test and verify it fails**
+
+Run: `npm test -- tests/components/Footer.test.tsx`
+Expected: FAIL — `Footer` renders no links yet.
+
+- [ ] **Step 18: Add a mobile-only nav to `components/Footer.tsx`**
+
+```tsx
+import Link from 'next/link';
+
+const FOOTER_LINKS = [
+  { href: '/', label: 'Acasă' },
+  { href: '/cum-functioneaza', label: 'Cum funcționează' },
+  { href: '/institutii', label: 'Instituții' },
+  { href: '/intrebari-frecvente', label: 'Întrebări frecvente' },
+];
+
+export function Footer() {
+  return (
+    <footer className="w-full bg-surface-container-low mt-space-xl">
+      <div className="max-w-7xl mx-auto px-margin py-space-xl flex flex-col gap-space-md">
+        <nav aria-label="Navigare footer" className="flex flex-wrap gap-space-md md:hidden">
+          {FOOTER_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="font-label-lg text-label-lg text-on-surface-variant hover:text-on-surface transition-colors"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+        <p className="font-body-sm text-body-sm text-on-surface-variant">
+          Dispecerat Civic Gratuit: <strong className="text-on-surface">0800 008 123</strong>{' '}
+          (Luni – Vineri: 08:00 – 18:00)
+        </p>
+        <p className="font-body-sm text-body-sm text-on-surface-variant">
+          © 2026 Unde merg? – Orientare Civică. Acest serviciu civic nu constituie consultanță
+          juridică autorizată. Informațiile prezentate au scop strict orientativ.
+        </p>
+      </div>
+    </footer>
+  );
+}
+```
+
+(`md:hidden` keeps this nav mobile-only, since `Header`'s own nav already covers desktop at `md:` and up — this avoids two visible navs on wide viewports.)
+
+- [ ] **Step 19: Run the test and verify it passes**
+
+Run: `npm test -- tests/components/Footer.test.tsx`
+Expected: PASS, 2 tests.
+
+- [ ] **Step 20: Run the full suite and build**
+
+Run: `npm test`
+Expected: all test files pass.
+
+Run: `npm run build`
+Expected: succeeds with no type errors.
+
+- [ ] **Step 21: Commit**
+
+```bash
+git add components/InstitutionCard.tsx tests/components/InstitutionCard.test.tsx lib/institutions.ts tests/lib/institutions.test.ts app/institutii/page.tsx tests/app/institutii.test.tsx app/cum-functioneaza/page.tsx app/intrebari-frecvente/page.tsx components/Footer.tsx tests/components/Footer.test.tsx
+git commit -m "fix: add page metadata, style InstitutionCard's link, add mobile footer nav, institutii empty state, and name Groq in the FAQ"
+```
+
+---
+
 ## Self-review notes
 
 - Spec coverage: catalog screens #1 (hero/workspace → Task 5/7), #2 (too-short validation → Task 5), #3 (analysis-in-progress → Task 6) are all covered; the roadmap's stack-swap decisions (Task 1: Neon, Task 2: Groq) are covered; the roadmap's RLS-drop ruling is applied in Task 1 Step 2; the descope list (ambient decoration, urgency contact box, examples panel, voice input) is stated once in Global Constraints rather than repeated per task.
 - Type consistency checked: `findInstitution`'s signature changes from `(SupabaseClient, string)` to `(NeonQueryFunction<false, false>, string)` consistently across Task 1's rewrite and Task 2's route usage; `ProblemInput`/`AnalysisResult`'s public props are unchanged from v1 across Tasks 5–7, so no other file needs prop-shape updates.
+- Placeholder scan: no "TBD"/"add appropriate styling" found; every step has runnable code or an exact command.
+
+### Self-review notes — Tasks 8-10 addendum
+
+- Spec coverage: Critical #1 (design-token bridge) and Minors #6/#7/#9 from the final review → Task 8. Important #3 (trust indicators + how-it-works panel) → Task 9. Important #4 (dead nav links) → Tasks 9 (`/cum-functioneaza`) and 10 (`/institutii`, `/intrebari-frecvente`). Minor #5 (dead `font-{name}` classes) and the mobile-hamburger-nav half of Important #4 are deliberately NOT included — the plan's own Global Constraints already say implementers "may omit" the dead classes (not "must remove"), and no mobile nav was requested; both are parked in the ledger as low-value/out-of-scope-for-now rather than silently dropped.
+- Type consistency checked: `listInstitutions` reuses `NeonQueryFunction<false, false>` and `Institution` exactly as `findInstitution` already does; `HowItWorks` takes no props (matching its use both inline and as a full page); `app/institutii/page.tsx` is the first Server Component page in the app (no `'use client'`) — its test calls the async function directly and awaits it before passing to `render()`, which works with the existing Vitest + Testing Library setup without additional config.
 - Placeholder scan: no "TBD"/"add appropriate styling" found; every step has runnable code or an exact command.
