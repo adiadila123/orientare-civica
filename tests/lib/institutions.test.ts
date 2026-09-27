@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { NeonQueryFunction } from '@neondatabase/serverless';
-import { findInstitution } from '@/lib/institutions';
+import { findInstitution, listInstitutions } from '@/lib/institutions';
 import type { Institution } from '@/lib/types';
 
 function createFakeSql(rows: unknown[]) {
@@ -37,5 +37,19 @@ describe('findInstitution', () => {
   it('returns null when the row fails schema validation', async () => {
     const sql = createFakeSql([{ ...sampleInstitution, website_url: 'not-a-url' }]);
     expect(await findInstitution(sql, 'ANPC')).toBeNull();
+  });
+});
+
+describe('listInstitutions', () => {
+  it('returns every institution parsed from the rows', async () => {
+    const sql = createFakeSql([sampleInstitution]);
+    const result = await listInstitutions(sql);
+    expect(result).toEqual([sampleInstitution]);
+  });
+
+  it('filters out rows that fail schema validation', async () => {
+    const sql = createFakeSql([sampleInstitution, { ...sampleInstitution, website_url: 'not-a-url' }]);
+    const result = await listInstitutions(sql);
+    expect(result).toEqual([sampleInstitution]);
   });
 });
