@@ -8,4 +8,12 @@ describe('Footer', () => {
     expect(screen.getByText(/0800 008 123/)).toBeInTheDocument();
     expect(screen.getByText(/nu constituie consultanță juridică/)).toBeInTheDocument();
   });
+
+  it('renders navigation links to every page', () => {
+    render(<Footer />);
+    expect(screen.getByRole('link', { name: 'Acasă' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Cum funcționează' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Instituții' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Întrebări frecvente' })).toBeInTheDocument();
+  });
 });

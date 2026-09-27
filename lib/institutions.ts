@@ -21,8 +21,14 @@ export async function listInstitutions(
   sql: NeonQueryFunction<false, false>
 ): Promise<Institution[]> {
   const rows = await sql`SELECT * FROM institutions ORDER BY name`;
-  return rows
-    .map((row) => InstitutionSchema.safeParse(row))
-    .filter((result): result is { success: true; data: Institution } => result.success)
-    .map((result) => result.data);
+  const institutions: Institution[] = [];
+  for (const row of rows) {
+    const result = InstitutionSchema.safeParse(row);
+    if (result.success) {
+      institutions.push(result.data);
+    } else {
+      console.warn('Skipping institution row that failed schema validation', result.error.message);
+    }
+  }
+  return institutions;
 }

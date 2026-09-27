@@ -33,4 +33,12 @@ describe('InstitutiiPage', () => {
 
     expect(screen.getByText('Agenția Națională de Administrare Fiscală')).toBeInTheDocument();
   });
+
+  it('shows a fallback message when no institutions are returned', async () => {
+    vi.mocked(listInstitutions).mockResolvedValue([]);
+
+    render(await InstitutiiPage());
+
+    expect(screen.getByText(/nu este disponibilă momentan/)).toBeInTheDocument();
+  });
 });

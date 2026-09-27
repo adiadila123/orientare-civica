@@ -52,4 +52,14 @@ describe('listInstitutions', () => {
     const result = await listInstitutions(sql);
     expect(result).toEqual([sampleInstitution]);
   });
+
+  it('warns when a row fails schema validation', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const sql = createFakeSql([{ ...sampleInstitution, website_url: 'not-a-url' }]);
+
+    await listInstitutions(sql);
+
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
 });

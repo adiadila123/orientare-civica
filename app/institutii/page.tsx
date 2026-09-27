@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import { createDb } from '@/lib/db';
 import { listInstitutions } from '@/lib/institutions';
 import { InstitutionCard } from '@/components/InstitutionCard';
+
+export const metadata: Metadata = {
+  title: 'Instituții — Unde Merg?',
+  description: 'Lista instituțiilor publice către care Unde Merg? te poate direcționa.',
+};
 
 // Institution data is fetched live from the DB on every request rather than
 // baked into the static shell at build time (which would require DB access
@@ -17,11 +23,17 @@ export default async function InstitutiiPage() {
       <p className="font-body-lg text-body-lg text-on-surface-variant">
         Lista instituțiilor publice către care te putem direcționa.
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
-        {institutions.map((institution) => (
-          <InstitutionCard key={institution.code} institution={institution} />
-        ))}
-      </div>
+      {institutions.length === 0 ? (
+        <p className="font-body-sm text-body-sm text-on-surface-variant">
+          Lista instituțiilor nu este disponibilă momentan. Încearcă din nou mai târziu.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+          {institutions.map((institution) => (
+            <InstitutionCard key={institution.code} institution={institution} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

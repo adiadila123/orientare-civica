@@ -1,4 +1,11 @@
+import type { Metadata } from 'next';
 import { HowItWorks } from '@/components/HowItWorks';
+
+export const metadata: Metadata = {
+  title: 'Cum funcționează — Unde Merg?',
+  description:
+    'Află în trei pași simpli cum te ajută Unde Merg? să identifici instituția publică potrivită pentru problema ta.',
+};
 
 export default function CumFunctioneazaPage() {
   return (

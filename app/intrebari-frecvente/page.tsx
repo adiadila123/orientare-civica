@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Întrebări frecvente — Unde Merg?',
+  description: 'Răspunsuri la cele mai frecvente întrebări despre Unde Merg?.',
+};
+
 const FAQ_ITEMS = [
   {
     question: 'Este gratuit acest serviciu?',
@@ -10,7 +17,7 @@ const FAQ_ITEMS = [
   {
     question: 'Ce se întâmplă cu datele mele?',
     answer:
-      'Descrierea problemei este trimisă către un serviciu de inteligență artificială pentru analiză și nu este asociată cu identitatea ta.',
+      'Descrierea problemei este trimisă către Groq, un furnizor de inteligență artificială, pentru analiză și nu este asociată cu identitatea ta.',
   },
   {
     question: 'Cât de precisă este recomandarea?',

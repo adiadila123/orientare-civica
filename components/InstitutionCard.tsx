@@ -7,15 +7,22 @@ interface InstitutionCardProps {
 
 export function InstitutionCard({ institution }: InstitutionCardProps) {
   return (
-    <Card>
+    <Card className="shadow-sm ring-0">
       <CardHeader>
-        <CardTitle>{institution.name}</CardTitle>
+        <CardTitle className="font-title-md text-title-md text-on-surface">
+          {institution.name}
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-1 text-sm">
+      <CardContent className="flex flex-col gap-space-xs font-body-sm text-body-sm text-on-surface-variant">
         {institution.description && <p>{institution.description}</p>}
         {institution.website_url && (
           <p>
-            <a href={institution.website_url} target="_blank" rel="noreferrer">
+            <a
+              href={institution.website_url}
+              target="_blank"
+              rel="noreferrer"
+              className="text-secondary underline underline-offset-2"
+            >
               {institution.website_url}
             </a>
           </p>
