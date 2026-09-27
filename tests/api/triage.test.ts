@@ -91,4 +91,55 @@ describe('POST /api/triage', () => {
     const response = await POST(makeRequest({ description: 'test' }));
     expect(response.status).toBe(500);
   });
+
+  it('returns 500 when GROQ_API_KEY is missing', async () => {
+    delete process.env.GROQ_API_KEY;
+
+    const response = await POST(makeRequest({ description: 'Am o problemă cu ANAF' }));
+    expect(response.status).toBe(500);
+  });
+
+  it('sends the user description to Groq in the user message', async () => {
+    createCompletionMock.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(validTriageResult) } }],
+    });
+    vi.mocked(findInstitution).mockResolvedValue(null);
+
+    await POST(makeRequest({ description: 'Am o problemă cu declarația fiscală' }));
+
+    expect(createCompletionMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            role: 'user',
+            content: expect.stringContaining('Am o problemă cu declarația fiscală'),
+          }),
+        ]),
+      })
+    );
+  });
+
+  it('passes the parsed institution_type to findInstitution', async () => {
+    createCompletionMock.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(validTriageResult) } }],
+    });
+    vi.mocked(findInstitution).mockResolvedValue(null);
+
+    await POST(makeRequest({ description: 'Am o problemă cu declarația fiscală' }));
+
+    expect(findInstitution).toHaveBeenCalledWith(expect.anything(), validTriageResult.institution_type);
+  });
+
+  it('returns institution: null end-to-end when no match is found', async () => {
+    createCompletionMock.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(validTriageResult) } }],
+    });
+    vi.mocked(findInstitution).mockResolvedValue(null);
+
+    const response = await POST(makeRequest({ description: 'Am o problemă cu declarația fiscală' }));
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.institution).toBeNull();
+  });
 });

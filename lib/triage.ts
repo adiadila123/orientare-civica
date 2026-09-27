@@ -18,7 +18,7 @@ Fii precis. Dacă nu ești sigur, setează confidence sub 0.7 și recomandă ver
 export function extractTriageJson(rawText: string): unknown {
   const match = rawText.match(/\{[\s\S]*\}/);
   if (!match) {
-    throw new Error('No JSON object found in Gemini response');
+    throw new Error('No JSON object found in Groq response');
   }
   return JSON.parse(match[0]);
 }

@@ -15,7 +15,7 @@ describe('extractTriageJson', () => {
 
   it('throws when no JSON object is present', () => {
     expect(() => extractTriageJson('nu am putut analiza cererea')).toThrow(
-      'No JSON object found in Gemini response'
+      'No JSON object found in Groq response'
     );
   });
 });

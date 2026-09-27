@@ -15,7 +15,7 @@ export function Logo({ className }: LogoProps) {
         <span className="font-title-md text-title-md text-primary leading-tight tracking-tight">
           Unde merg?
         </span>
-        <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">
+        <span className="font-label-sm text-label-sm text-on-surface-variant">
           Orientare Civică
         </span>
       </span>
