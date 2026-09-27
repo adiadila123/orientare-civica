@@ -1,7 +1,7 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import { NextResponse } from 'next/server';
 import { TriageResultSchema } from '@/lib/schema';
-import { TRIAGE_SYSTEM_PROMPT, extractTriageJson } from '@/lib/gemini';
+import { TRIAGE_SYSTEM_PROMPT, extractTriageJson } from '@/lib/triage';
 import { findInstitution } from '@/lib/institutions';
 import { createDb } from '@/lib/db';
 
@@ -20,20 +20,23 @@ export async function POST(req: Request) {
   }
 
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-      throw new Error('Missing GEMINI_API_KEY environment variable');
+      throw new Error('Missing GROQ_API_KEY environment variable');
     }
+    const groq = new Groq({ apiKey });
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const completion = await groq.chat.completions.create({
+      messages: [
+        { role: 'system', content: TRIAGE_SYSTEM_PROMPT },
+        { role: 'user', content: `Problema utilizatorului: ${description}` },
+      ],
+      model: 'openai/gpt-oss-120b',
+      temperature: 0.3,
+      response_format: { type: 'json_object' },
+    });
 
-    const result = await model.generateContent([
-      { text: TRIAGE_SYSTEM_PROMPT },
-      { text: `Problema utilizatorului: ${description}` },
-    ]);
-
-    const rawText = result.response.text();
+    const rawText = completion.choices[0]?.message?.content ?? '';
     const parsed = TriageResultSchema.parse(extractTriageJson(rawText));
 
     const sql = createDb();

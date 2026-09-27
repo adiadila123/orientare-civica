@@ -1,8 +1,8 @@
 # Unde Merg?
 
-Aplicație civică în limba română: cetățeanul descrie o problemă în text liber, Gemini o clasifică, iar aplicația afișează instituția publică potrivită, documentele necesare și pașii următori.
+Aplicație civică în limba română: cetățeanul descrie o problemă în text liber, Groq o clasifică, iar aplicația afișează instituția publică potrivită, documentele necesare și pașii următori.
 
-Stack: Next.js (App Router, TypeScript), Tailwind CSS, shadcn/ui, Zod, Gemini (`@google/generative-ai`), Neon (`@neondatabase/serverless`), Vitest + Testing Library.
+Stack: Next.js (App Router, TypeScript), Tailwind CSS, shadcn/ui, Zod, Groq (`groq-sdk`), Neon (`@neondatabase/serverless`), Vitest + Testing Library.
 
 ## Configurare
 
@@ -12,11 +12,11 @@ Creează un fișier `.env.local` în rădăcina proiectului cu:
 
 ```bash
 DATABASE_URL=your-neon-connection-string
-GEMINI_API_KEY=your-gemini-key
+GROQ_API_KEY=your-groq-key
 ```
 
 - `DATABASE_URL` — șirul de conectare PostgreSQL de la Neon Console → Connection Details. Formatul: `postgresql://user:password@host/dbname`
-- `GEMINI_API_KEY` — se obține din [Google AI Studio](https://aistudio.google.com/apikey).
+- `GROQ_API_KEY` — se obține din [console.groq.com/keys](https://console.groq.com/keys).
 
 ### 2. Baza de date
 

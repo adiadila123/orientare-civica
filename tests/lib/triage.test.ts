@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractTriageJson, TRIAGE_SYSTEM_PROMPT } from '@/lib/gemini';
+import { extractTriageJson, TRIAGE_SYSTEM_PROMPT } from '@/lib/triage';
 import { TriageResultSchema } from '@/lib/schema';
 
 describe('extractTriageJson', () => {

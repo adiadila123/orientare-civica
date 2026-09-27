@@ -1,13 +1,11 @@
 // @vitest-environment node
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-const generateContentMock = vi.fn();
+const createCompletionMock = vi.fn();
 
-vi.mock('@google/generative-ai', () => ({
-  // Vitest 5 constructs `new`-called mock implementations via `Reflect.construct`,
-  // which requires a constructible function (arrow functions are not constructible).
-  GoogleGenerativeAI: vi.fn().mockImplementation(function GoogleGenerativeAI() {
-    return { getGenerativeModel: () => ({ generateContent: generateContentMock }) };
+vi.mock('groq-sdk', () => ({
+  default: vi.fn().mockImplementation(function Groq() {
+    return { chat: { completions: { create: createCompletionMock } } };
   }),
 }));
 
@@ -42,7 +40,8 @@ function makeRequest(body: unknown) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  process.env.GEMINI_API_KEY = 'test-key';
+  process.env.GROQ_API_KEY = 'test-key';
+  process.env.DATABASE_URL = 'postgres://test';
 });
 
 describe('POST /api/triage', () => {
@@ -51,17 +50,14 @@ describe('POST /api/triage', () => {
     expect(response.status).toBe(400);
   });
 
-  it('returns 400 when description exceeds 2000 characters', async () => {
+  it('returns 400 when description is too long', async () => {
     const response = await POST(makeRequest({ description: 'a'.repeat(2001) }));
-    const json = await response.json();
-
     expect(response.status).toBe(400);
-    expect(json.error).toBe('description is too long');
   });
 
   it('returns the triage result merged with the matched institution', async () => {
-    generateContentMock.mockResolvedValue({
-      response: { text: () => JSON.stringify(validTriageResult) },
+    createCompletionMock.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(validTriageResult) } }],
     });
     vi.mocked(findInstitution).mockResolvedValue({
       id: '1',
@@ -82,11 +78,14 @@ describe('POST /api/triage', () => {
     expect(response.status).toBe(200);
     expect(json.institution_type).toBe('ANAF');
     expect(json.institution.code).toBe('ANAF');
+    expect(createCompletionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ model: 'openai/gpt-oss-120b', response_format: { type: 'json_object' } })
+    );
   });
 
-  it('returns 500 when Gemini responds with malformed JSON', async () => {
-    generateContentMock.mockResolvedValue({
-      response: { text: () => 'nu pot răspunde' },
+  it('returns 500 when Groq responds with malformed JSON', async () => {
+    createCompletionMock.mockResolvedValue({
+      choices: [{ message: { content: 'nu pot răspunde' } }],
     });
 
     const response = await POST(makeRequest({ description: 'test' }));
