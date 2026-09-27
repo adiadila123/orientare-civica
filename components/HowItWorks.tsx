@@ -1,3 +1,5 @@
+import { StepNumber } from '@/components/StepNumber';
+
 const HOW_IT_WORKS_STEPS = [
   'Descrii problema ta în cuvinte simple, fără termeni juridici.',
   'Inteligența artificială analizează situația și identifică domeniul potrivit.',
@@ -11,9 +13,7 @@ export function HowItWorks() {
       <ol className="flex flex-col gap-space-sm">
         {HOW_IT_WORKS_STEPS.map((step, index) => (
           <li key={step} className="flex items-center gap-space-sm">
-            <span className="w-6 h-6 rounded-full bg-secondary text-on-secondary text-label-sm font-label-sm flex items-center justify-center shrink-0">
-              {index + 1}
-            </span>
+            <StepNumber index={index + 1} />
             <span className="font-body-sm text-body-sm text-on-surface">{step}</span>
           </li>
         ))}

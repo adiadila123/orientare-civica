@@ -1,3 +1,5 @@
+import { StepNumber } from '@/components/StepNumber';
+
 const STEPS = [
   'Se analizează textul',
   'Se identifică domeniul',
@@ -10,9 +12,7 @@ export function AnalysisProgress() {
     <div role="status" aria-label="Analiză în curs" className="flex flex-col gap-space-sm">
       {STEPS.map((step, index) => (
         <div key={step} className="flex items-center gap-space-sm">
-          <span className="w-8 h-8 rounded-full bg-primary text-on-primary font-label-md text-label-md flex items-center justify-center shrink-0">
-            {index + 1}
-          </span>
+          <StepNumber index={index + 1} size="lg" />
           <span className="font-body-md text-body-md text-on-surface">{step}</span>
         </div>
       ))}

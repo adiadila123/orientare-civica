@@ -70,4 +70,24 @@ describe('InstitutionCatalog', () => {
     render(<InstitutionCatalog institutions={[]} />);
     expect(screen.getByText(/nu este disponibilă momentan/)).toBeInTheDocument();
   });
+
+  it('matches search text typed without diacritics', async () => {
+    const user = userEvent.setup();
+    render(<InstitutionCatalog institutions={[anaf, anpc]} />);
+
+    await user.type(screen.getByLabelText('Caută o instituție'), 'protectia');
+
+    expect(screen.getByText(anpc.name)).toBeInTheDocument();
+    expect(screen.queryByText(anaf.name)).not.toBeInTheDocument();
+  });
+
+  it('matches search text against the institution code (acronym)', async () => {
+    const user = userEvent.setup();
+    render(<InstitutionCatalog institutions={[anaf, anpc]} />);
+
+    await user.type(screen.getByLabelText('Caută o instituție'), 'anaf');
+
+    expect(screen.getByText(anaf.name)).toBeInTheDocument();
+    expect(screen.queryByText(anpc.name)).not.toBeInTheDocument();
+  });
 });

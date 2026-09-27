@@ -2,14 +2,20 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createDb } from '@/lib/db';
 import { findInstitution } from '@/lib/institutions';
+import { StepNumber } from '@/components/StepNumber';
 
 const STAMP_DUTY_AMOUNT = '20,00 LEI';
 const LEGAL_DEADLINE_DAYS = 15;
 
-const REQUIRED_DOCUMENTS = [
+const CONTESTATION_DOCUMENTS = [
   'Copie act de identitate',
   'Copie procesul-verbal de contravenție',
   'Dovada plății taxei de timbru (dacă este cazul)',
+];
+
+const COMPLAINT_DOCUMENTS = [
+  'Copie act de identitate',
+  'Orice document care susține sesizarea (facturi, corespondență, fotografii etc.)',
 ];
 
 export const dynamic = 'force-dynamic';
@@ -21,8 +27,13 @@ export async function generateMetadata(
   const sql = createDb();
   const institution = await findInstitution(sql, code);
 
+  if (!institution) {
+    return { title: 'Instituție negăsită — Unde Merg?' };
+  }
+
   return {
-    title: institution ? `${institution.name} — Ghid — Unde Merg?` : 'Instituție negăsită — Unde Merg?',
+    title: `${institution.name} — Ghid — Unde Merg?`,
+    description: `Ghid pas cu pas pentru ${institution.name}: termen legal, pași și documente necesare.`,
   };
 }
 
@@ -35,37 +46,44 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
     notFound();
   }
 
-  const resolutionPaths = [
-    {
-      title: 'Online',
-      description: institution.contact_form_url
-        ? 'Depune cererea prin formularul online al instituției.'
-        : institution.website_url
-          ? 'Verifică site-ul instituției pentru depunere online.'
-          : 'Depunerea online nu este disponibilă pentru această instituție.',
-    },
-    {
-      title: 'Telefon',
-      description: institution.phone
-        ? `Sună la ${institution.phone} pentru îndrumare.`
-        : 'Numărul de telefon nu este disponibil pentru această instituție.',
-    },
-    {
-      title: 'În persoană',
-      description: institution.address
-        ? `Depune cererea la sediul: ${institution.address}.`
-        : 'Adresa sediului nu este disponibilă pentru această instituție.',
-    },
-  ];
+  const isContestable = Boolean(institution.iban || institution.associated_court);
 
-  const steps = [
-    'Completează cererea de contestație folosind modelul recomandat.',
-    institution.iban && institution.cod_venit && institution.cui
-      ? `Achită taxa de timbru de ${STAMP_DUTY_AMOUNT} către IBAN ${institution.iban}, Cod Venit ${institution.cod_venit}, CUI ${institution.cui}.`
-      : `Achită taxa de timbru de ${STAMP_DUTY_AMOUNT} (detaliile de plată se obțin de la instituție).`,
-    `Depune cererea și dovada plății la ${institution.name}, prin canalul ales mai sus.`,
-    'Așteaptă răspunsul instituției în termenul legal.',
-  ];
+  const resolutionPaths = [
+    institution.contact_form_url
+      ? { title: 'Online', description: 'Depune cererea prin formularul online al instituției.' }
+      : institution.website_url
+        ? { title: 'Online', description: 'Verifică site-ul instituției pentru depunere online.' }
+        : null,
+    institution.phone
+      ? { title: 'Telefon', description: `Sună la ${institution.phone} pentru îndrumare.` }
+      : null,
+    institution.address
+      ? { title: 'În persoană', description: `Depune cererea la sediul: ${institution.address}.` }
+      : null,
+  ].filter((path): path is { title: string; description: string } => path !== null);
+
+  const hasResolutionPath = resolutionPaths.length > 0;
+
+  const steps = isContestable
+    ? [
+        'Completează cererea de contestație folosind modelul recomandat.',
+        institution.iban && institution.cod_venit && institution.cui
+          ? `Achită taxa de timbru de ${STAMP_DUTY_AMOUNT} către IBAN ${institution.iban}, Cod Venit ${institution.cod_venit}, CUI ${institution.cui}.`
+          : `Achită taxa de timbru de ${STAMP_DUTY_AMOUNT} (detaliile de plată se obțin de la instituție).`,
+        hasResolutionPath
+          ? `Depune cererea și dovada plății la ${institution.name}, prin canalul ales mai sus.`
+          : `Depune cererea și dovada plății la ${institution.name} — verifică site-ul oficial sau contactează primăria/poliția locală din zona ta pentru canalul de depunere.`,
+        'Așteaptă răspunsul instituției în termenul legal.',
+      ]
+    : [
+        'Completează o sesizare sau cerere către instituție, descriind clar problema.',
+        hasResolutionPath
+          ? 'Trimite sesizarea prin canalul ales mai sus.'
+          : `Trimite sesizarea către ${institution.name} — verifică site-ul oficial pentru datele de contact.`,
+        'Așteaptă răspunsul instituției.',
+      ];
+
+  const requiredDocuments = isContestable ? CONTESTATION_DOCUMENTS : COMPLAINT_DOCUMENTS;
 
   return (
     <div className="max-w-5xl mx-auto px-margin py-space-xl flex flex-col gap-space-lg">
@@ -83,31 +101,42 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
         )}
       </div>
 
-      <div className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
-        <h2 className="font-title-md text-title-md text-on-surface mb-space-xs">Termen legal</h2>
-        <p className="font-body-sm text-body-sm text-on-surface-variant">
-          Ai la dispoziție {LEGAL_DEADLINE_DAYS} zile calendaristice de la comunicarea procesului-verbal
-          pentru a depune contestația, conform O.G. nr. 2/2001.
-        </p>
-      </div>
+      {isContestable && (
+        <div className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+          <h2 className="font-title-md text-title-md text-on-surface mb-space-xs">Termen legal</h2>
+          <p className="font-body-sm text-body-sm text-on-surface-variant">
+            Ai la dispoziție {LEGAL_DEADLINE_DAYS} zile calendaristice de la comunicarea procesului-verbal
+            pentru a depune contestația, conform O.G. nr. 2/2001. Cuantumul taxei de timbru poate varia —
+            verifică suma actuală direct cu instituția înainte de plată.
+          </p>
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-space-md">
-        {resolutionPaths.map((path) => (
-          <div key={path.title} className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
-            <h3 className="font-title-md text-title-md text-on-surface mb-space-xs">{path.title}</h3>
-            <p className="font-body-sm text-body-sm text-on-surface-variant">{path.description}</p>
-          </div>
-        ))}
-      </div>
+      {hasResolutionPath ? (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-space-md">
+          {resolutionPaths.map((path) => (
+            <div key={path.title} className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+              <h3 className="font-title-md text-title-md text-on-surface mb-space-xs">{path.title}</h3>
+              <p className="font-body-sm text-body-sm text-on-surface-variant">{path.description}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+          <h3 className="font-title-md text-title-md text-on-surface mb-space-xs">Contact</h3>
+          <p className="font-body-sm text-body-sm text-on-surface-variant">
+            {institution.description ??
+              'Datele de contact pentru această instituție nu sunt disponibile momentan în platforma noastră.'}
+          </p>
+        </div>
+      )}
 
       <div className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
         <h2 className="font-title-md text-title-md text-on-surface mb-space-xs">Pașii de urmat</h2>
         <ol className="flex flex-col gap-space-sm">
           {steps.map((step, index) => (
             <li key={index} className="flex items-center gap-space-sm">
-              <span className="w-6 h-6 rounded-full bg-secondary text-on-secondary text-label-sm font-label-sm flex items-center justify-center shrink-0">
-                {index + 1}
-              </span>
+              <StepNumber index={index + 1} />
               <span className="font-body-sm text-body-sm text-on-surface">{step}</span>
             </li>
           ))}
@@ -117,7 +146,7 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
       <div className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
         <h2 className="font-title-md text-title-md text-on-surface mb-space-xs">Documente necesare</h2>
         <ul className="flex flex-col gap-space-xs">
-          {REQUIRED_DOCUMENTS.map((doc, index) => (
+          {requiredDocuments.map((doc, index) => (
             <li key={index} className="flex items-center gap-space-xs font-body-sm text-body-sm">
               <span aria-hidden="true">✓</span>
               <span>{doc}</span>
@@ -126,26 +155,28 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
         </ul>
       </div>
 
-      <div className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
-        <h2 className="font-title-md text-title-md text-on-surface mb-space-xs">Date de contact</h2>
-        <div className="flex flex-col gap-space-xs font-body-sm text-body-sm text-on-surface-variant">
-          {institution.address && <p>{institution.address}</p>}
-          {institution.phone && <p>Telefon: {institution.phone}</p>}
-          {institution.email && <p>Email: {institution.email}</p>}
-          {institution.website_url && (
-            <p>
-              <a
-                href={institution.website_url}
-                target="_blank"
-                rel="noreferrer"
-                className="text-secondary underline underline-offset-2"
-              >
-                {institution.website_url}
-              </a>
-            </p>
-          )}
+      {(institution.address || institution.phone || institution.email || institution.website_url) && (
+        <div className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+          <h2 className="font-title-md text-title-md text-on-surface mb-space-xs">Date de contact</h2>
+          <div className="flex flex-col gap-space-xs font-body-sm text-body-sm text-on-surface-variant">
+            {institution.address && <p>{institution.address}</p>}
+            {institution.phone && <p>Telefon: {institution.phone}</p>}
+            {institution.email && <p>Email: {institution.email}</p>}
+            {institution.website_url && (
+              <p>
+                <a
+                  href={institution.website_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-secondary underline underline-offset-2"
+                >
+                  {institution.website_url}
+                </a>
+              </p>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

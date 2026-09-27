@@ -17,6 +17,13 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 const ALL_CATEGORY = 'toate';
 
+function normalize(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase();
+}
+
 interface InstitutionCatalogProps {
   institutions: Institution[];
 }
@@ -45,7 +52,10 @@ export function InstitutionCatalog({ institutions }: InstitutionCatalogProps) {
 
   const filtered = institutions.filter((institution) => {
     const matchesCategory = activeCategory === ALL_CATEGORY || institution.category === activeCategory;
-    const matchesSearch = institution.name.toLowerCase().includes(searchText.trim().toLowerCase());
+    const haystack = normalize(
+      [institution.name, institution.code, institution.description ?? ''].join(' ')
+    );
+    const matchesSearch = haystack.includes(normalize(searchText.trim()));
     return matchesCategory && matchesSearch;
   });
 

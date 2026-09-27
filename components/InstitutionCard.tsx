@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { buttonVariants } from '@/components/ui/button';
 import type { Institution } from '@/lib/types';
 
 interface InstitutionCardProps {
@@ -14,7 +15,7 @@ export function InstitutionCard({ institution }: InstitutionCardProps) {
           {institution.name}
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-space-xs font-body-sm text-body-sm text-on-surface-variant">
+      <CardContent className="flex flex-col gap-space-sm font-body-sm text-body-sm text-on-surface-variant">
         {institution.description && <p>{institution.description}</p>}
         {institution.website_url && (
           <p>
@@ -24,20 +25,18 @@ export function InstitutionCard({ institution }: InstitutionCardProps) {
               rel="noreferrer"
               className="text-secondary underline underline-offset-2"
             >
-              {institution.website_url}
+              {institution.website_url} <span aria-hidden="true">↗</span>
             </a>
           </p>
         )}
         {institution.phone && <p>Telefon: {institution.phone}</p>}
         {institution.email && <p>Email: {institution.email}</p>}
-        <p>
-          <Link
-            href={`/institutii/${institution.code.toLowerCase()}`}
-            className="text-secondary underline underline-offset-2"
-          >
-            Vezi ghidul complet
-          </Link>
-        </p>
+        <Link
+          href={`/institutii/${encodeURIComponent(institution.code.toLowerCase())}`}
+          className={buttonVariants({ variant: 'outline', size: 'sm', className: 'self-start' })}
+        >
+          Vezi ghidul complet
+        </Link>
       </CardContent>
     </Card>
   );

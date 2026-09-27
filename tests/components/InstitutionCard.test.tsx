@@ -28,4 +28,10 @@ describe('InstitutionCard', () => {
     const link = screen.getByRole('link', { name: 'Vezi ghidul complet' });
     expect(link).toHaveAttribute('href', '/institutii/anaf');
   });
+
+  it('styles the guide link as a distinct call-to-action, not a plain text link', () => {
+    render(<InstitutionCard institution={institution} />);
+    const link = screen.getByRole('link', { name: 'Vezi ghidul complet' });
+    expect(link.className).not.toContain('underline');
+  });
 });
