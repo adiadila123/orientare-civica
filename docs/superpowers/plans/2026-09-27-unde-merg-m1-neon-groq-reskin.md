@@ -25,6 +25,7 @@ As with v1, every task's automated tests mock Groq/Neon entirely, so `npm test` 
 - Accessibility: ARIA labels, keyboard navigation, visible focus states, 4.5:1 contrast minimum — the v1 fixes (role="alert"/"region", aria-live) carry forward into the redesigned components.
 - Every task must leave `npm test` and `npm run build` green.
 - **Descoped from M1 (explicitly, not silently dropped):** the decorative ambient gradient-blob background divs from screen #1's hero, the "Ai o urgență civică?" contact box, the "Exemple de cazuri rezolvate" examples panel, and voice-input (`mic`) button are visual/informational polish with no functional or test surface — they may be added in a later pass but are not required for M1 to be considered complete. Everything else in screens #1–#3 (hero headline/subtitle, trust indicators, the 2-column workspace, situation chips, textarea, validation, the "how it works" panel, submit → loading stepper → result) is in scope.
+- **`font-{name}` classes (e.g. `font-title-md`, `font-label-sm`) that appear in this plan's example JSX are inert under the Task 3 token set as written** — Task 3 defines only a single global `--font-sans` (Plus Jakarta Sans applies everywhere by default) plus `--text-{name}` tokens for size/line-height/weight/letter-spacing, not a matching `--font-{name}` per named size the way the original Stitch export did (which would be pure duplication, since every named style uses the same one font family). Implementers may omit `font-{name}` classes entirely when writing/adapting this plan's components — dropping them changes nothing visually, since `--font-sans` already applies. Do not add 13 redundant `--font-{name}` tokens to `app/globals.css` to make them "work" — that would violate DRY for no visual benefit.
 - **RLS is dropped, not ported.** Neon is reached only via `DATABASE_URL` from server code — there is no PostgREST/anon-key client-side path the way Supabase had, so Postgres Row Level Security (relevant to v1's Supabase setup) doesn't apply here and should not be added to the migration.
 
 ---
@@ -961,6 +962,7 @@ git commit -m "feat: add AnalysisProgress loading stepper"
 **Interfaces:**
 - Keeps `AnalysisResult({ result: TriageResponse })` from v1 (institution-null fallback and a11y attrs from the final review carry forward unchanged in behavior, only visual structure changes).
 - Consumes `AnalysisProgress` (Task 6), `Header`/`Footer` (Task 4).
+- **`app/layout.tsx` was already modified once in Task 3** (font setup: `Plus_Jakarta_Sans` import, `<head>` Material Symbols link). Step 5 below modifies it again, additively — preserve every existing line from Task 3's edit; only add the `Header`/`Footer` import and JSX wrapping around `{children}`.
 
 - [ ] **Step 1: Update `tests/components/AnalysisResult.test.tsx`**
 
