@@ -72,4 +72,9 @@ describe('HomePage', () => {
 
     resolveFetch({ ok: true, json: () => Promise.resolve(sampleResponse) });
   });
+
+  it('shows the how-it-works panel before any submission', () => {
+    render(<HomePage />);
+    expect(screen.getByText('Cum funcționează')).toBeInTheDocument();
+  });
 });

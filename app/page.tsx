@@ -4,7 +4,10 @@ import { useState } from 'react';
 import { ProblemInput } from '@/components/ProblemInput';
 import { AnalysisResult } from '@/components/AnalysisResult';
 import { AnalysisProgress } from '@/components/AnalysisProgress';
+import { HowItWorks } from '@/components/HowItWorks';
 import type { TriageResponse } from '@/lib/types';
+
+const TRUST_INDICATORS = ['100% Gratuit', 'Fără cont necesar', 'Confidențial'];
 
 export default function HomePage() {
   const [result, setResult] = useState<TriageResponse | null>(null);
@@ -47,6 +50,16 @@ export default function HomePage() {
           Descrie situația ta în cuvinte simple și te direcționăm către instituția potrivită, cu
           documentele și pașii necesari.
         </p>
+        <div className="flex flex-wrap items-center justify-center gap-space-sm mt-space-md">
+          {TRUST_INDICATORS.map((indicator) => (
+            <span
+              key={indicator}
+              className="font-label-md text-label-md text-on-surface-variant bg-surface-container-low rounded-full px-space-sm py-1"
+            >
+              {indicator}
+            </span>
+          ))}
+        </div>
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
@@ -54,6 +67,7 @@ export default function HomePage() {
           <ProblemInput onSubmit={handleSubmit} isLoading={isLoading} />
         </div>
         <div className="lg:col-span-7">
+          {!isLoading && !error && !result && <HowItWorks />}
           {isLoading && <AnalysisProgress />}
           {error && (
             <p role="alert" className="font-body-sm text-body-sm text-error">
