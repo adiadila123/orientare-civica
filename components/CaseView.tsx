@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { LegalDocumentPreview } from '@/components/LegalDocumentPreview';
 import { EditCaseForm } from '@/components/EditCaseForm';
+import { buildContestationDeadlineIcs } from '@/lib/ics';
 import type { Case, Institution } from '@/lib/types';
 
 interface CaseViewProps {
@@ -29,6 +30,27 @@ export function CaseView({ initialCase, institution }: CaseViewProps) {
     setShowSuccess(true);
   }
 
+  function downloadDeadlineReminder() {
+    if (!caseRecord.pv_issue_date) {
+      return;
+    }
+    const ics = buildContestationDeadlineIcs({
+      caseNumber: caseRecord.case_number,
+      pvIssueDate: caseRecord.pv_issue_date,
+    });
+    const blob = new Blob([ics], { type: 'text/calendar' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `termen_contestatie_${caseRecord.case_number}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  const canRemindDeadline = Boolean(institution.associated_court && caseRecord.pv_issue_date);
+
   return (
     <div className="max-w-5xl mx-auto px-margin py-space-xl flex flex-col gap-space-lg">
       {showSuccess && (
@@ -40,15 +62,26 @@ export function CaseView({ initialCase, institution }: CaseViewProps) {
         </div>
       )}
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-space-sm">
         <h1 className="font-headline-lg text-headline-lg text-on-surface">Dosar {caseRecord.case_number}</h1>
-        <button
-          type="button"
-          onClick={() => setIsEditing(true)}
-          className="bg-primary text-on-primary rounded-lg px-space-md py-2 font-label-lg text-label-lg"
-        >
-          Editează
-        </button>
+        <div className="flex gap-space-sm">
+          {canRemindDeadline && (
+            <button
+              type="button"
+              onClick={downloadDeadlineReminder}
+              className="rounded-lg border border-outline-variant px-space-md py-2 font-label-lg text-label-lg text-on-surface"
+            >
+              Adaugă termenul în calendar
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setIsEditing(true)}
+            className="bg-primary text-on-primary rounded-lg px-space-md py-2 font-label-lg text-label-lg"
+          >
+            Editează
+          </button>
+        </div>
       </div>
 
       <LegalDocumentPreview caseRecord={caseRecord} institution={institution} />
