@@ -39,9 +39,15 @@ export default function HomePage() {
     }
   }
 
+  const isIdle = !isLoading && !error && !result;
+
   return (
-    <div className="max-w-7xl mx-auto px-margin py-space-xl">
-      <section className="text-center flex flex-col items-center mb-space-xl">
+    <div
+      className={`max-w-3xl mx-auto px-margin py-space-xl flex flex-col gap-space-lg ${
+        isIdle ? 'min-h-[70vh] justify-center' : ''
+      }`}
+    >
+      <section className="text-center flex flex-col items-center">
         <h1 className="font-display text-display text-on-surface max-w-4xl">
           Nu știi unde să te adresezi?{' '}
           <span className="text-secondary">Spune-ne problema ta.</span>
@@ -62,21 +68,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
-        <div className="lg:col-span-5 bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
-          <ProblemInput onSubmit={handleSubmit} isLoading={isLoading} />
-        </div>
-        <div className="lg:col-span-7">
-          {!isLoading && !error && !result && <HowItWorks />}
-          {isLoading && <AnalysisProgress />}
-          {error && (
-            <p role="alert" className="font-body-sm text-body-sm text-error">
-              {error}
-            </p>
-          )}
-          {result && <AnalysisResult result={result} />}
-        </div>
+      <div className="w-full bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+        <ProblemInput onSubmit={handleSubmit} isLoading={isLoading} />
       </div>
+
+      {isIdle && <HowItWorks />}
+      {isLoading && <AnalysisProgress />}
+      {error && (
+        <p role="alert" className="font-body-sm text-body-sm text-error">
+          {error}
+        </p>
+      )}
+      {result && <AnalysisResult result={result} />}
     </div>
   );
 }
