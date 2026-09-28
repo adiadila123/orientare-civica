@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { InstitutionSchema, CaseSchema } from '@/lib/schema';
+import { InstitutionSchema, CaseSchema, InfoRequestSchema } from '@/lib/schema';
 
 describe('InstitutionSchema', () => {
   it('accepts a valid institution', () => {
@@ -158,6 +158,46 @@ describe('CaseSchema', () => {
     if (result.success) {
       expect(result.data.created_at).toBe('2026-09-28T10:00:00.000Z');
       expect(result.data.pv_issue_date).toBe('2026-09-01');
+      expect(result.data.updated_at).toBe('2026-09-28T10:00:00.000Z');
+    }
+  });
+});
+
+describe('InfoRequestSchema', () => {
+  it('accepts a freshly-created request with only institution_code and information_requested set', () => {
+    const result = InfoRequestSchema.safeParse({
+      id: '1',
+      request_number: 'IP-2026-0001',
+      institution_code: 'PRIMARIE',
+      requester_name: null,
+      requester_address: null,
+      requester_email: null,
+      requester_phone: null,
+      information_requested: 'Câte sesizări au fost înregistrate în 2026?',
+      revision: 1,
+      created_at: '2026-09-28T10:00:00.000Z',
+      updated_at: '2026-09-28T10:00:00.000Z',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('coerces Date objects (as returned by the real Postgres driver) into ISO strings', () => {
+    const result = InfoRequestSchema.safeParse({
+      id: '1',
+      request_number: 'IP-2026-0001',
+      institution_code: 'PRIMARIE',
+      requester_name: 'Ion Popescu',
+      requester_address: null,
+      requester_email: null,
+      requester_phone: null,
+      information_requested: 'Câte sesizări au fost înregistrate în 2026?',
+      revision: 1,
+      created_at: new Date('2026-09-28T10:00:00.000Z'),
+      updated_at: new Date('2026-09-28T10:00:00.000Z'),
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.created_at).toBe('2026-09-28T10:00:00.000Z');
       expect(result.data.updated_at).toBe('2026-09-28T10:00:00.000Z');
     }
   });

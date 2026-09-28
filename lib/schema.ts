@@ -74,3 +74,17 @@ export const CaseSchema = z.object({
   revision: z.number().int(),
   updated_at: dateAsIsoString,
 });
+
+export const InfoRequestSchema = z.object({
+  id: z.string(),
+  request_number: z.string(),
+  institution_code: z.string(),
+  requester_name: z.string().nullable(),
+  requester_address: z.string().nullable(),
+  requester_email: z.string().nullable(),
+  requester_phone: z.string().nullable(),
+  information_requested: z.string(),
+  revision: z.number().int(),
+  created_at: dateAsIsoString,
+  updated_at: dateAsIsoString,
+});

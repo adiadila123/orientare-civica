@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { createDb } from '@/lib/db';
 import { findInstitution } from '@/lib/institutions';
 import { StepNumber } from '@/components/StepNumber';
+import { InfoRequestStarter } from '@/components/InfoRequestStarter';
 
 const STAMP_DUTY_AMOUNT = '20,00 LEI';
 const LEGAL_DEADLINE_DAYS = 15;
@@ -191,6 +192,8 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
           </div>
         </div>
       )}
+
+      <InfoRequestStarter institutionCode={institution.code} />
     </div>
   );
 }

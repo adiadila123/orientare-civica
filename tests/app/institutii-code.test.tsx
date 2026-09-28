@@ -13,6 +13,7 @@ vi.mock('next/navigation', () => ({
   notFound: vi.fn(() => {
     throw new Error('NEXT_NOT_FOUND');
   }),
+  useRouter: () => ({ push: vi.fn() }),
 }));
 
 import InstitutionGuidePage from '@/app/institutii/[code]/page';

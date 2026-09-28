@@ -10,13 +10,14 @@ import {
 
 interface CaseStatusTrackerProps {
   caseId: string;
+  sentLabel?: string;
 }
 
 function formatTimestamp(value: string): string {
   return new Date(value).toLocaleString('ro-RO');
 }
 
-export function CaseStatusTracker({ caseId }: CaseStatusTrackerProps) {
+export function CaseStatusTracker({ caseId, sentLabel = 'Am trimis contestația' }: CaseStatusTrackerProps) {
   const [status, setStatus] = useState<CaseLocalStatus>({ sentAt: null, responseReceivedAt: null });
 
   // Read from localStorage after mount only, so server and first client
@@ -40,7 +41,7 @@ export function CaseStatusTracker({ caseId }: CaseStatusTrackerProps) {
             onChange={() => setStatus(markCaseSent(caseId))}
             disabled={Boolean(status.sentAt)}
           />
-          Am trimis contestația
+          {sentLabel}
           {status.sentAt && (
             <span className="font-label-sm text-label-sm text-on-surface-variant">
               ({formatTimestamp(status.sentAt)})
