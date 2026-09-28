@@ -6,6 +6,12 @@ const FOOTER_LINKS = [
   { href: '/intrebari-frecvente', label: 'Întrebări frecvente' },
 ];
 
+const LEGAL_LINKS = [
+  { href: '/termeni-si-conditii', label: 'Termeni și condiții' },
+  { href: '/confidentialitate', label: 'Confidențialitate' },
+  { href: '/politica-cookie-uri', label: 'Cookie-uri' },
+];
+
 export function Footer() {
   return (
     <footer className="w-full bg-surface-container-low mt-space-xl">
@@ -22,13 +28,25 @@ export function Footer() {
           ))}
         </nav>
         <p className="font-body-sm text-body-sm text-on-surface-variant">
-          Dispecerat Civic Gratuit: <strong className="text-on-surface">0800 008 123</strong>{' '}
-          (Luni – Vineri: 08:00 – 18:00)
+          Pentru urgențe, sună la <strong className="text-on-surface">112</strong>.
         </p>
-        <p className="font-body-sm text-body-sm text-on-surface-variant">
-          © 2026 Unde merg? – Orientare Civică. Acest serviciu civic nu constituie consultanță
-          juridică autorizată. Informațiile prezentate au scop strict orientativ.
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-space-sm pt-space-sm border-t border-outline-variant">
+          <p className="font-label-sm text-label-sm text-on-surface-variant">
+            © {new Date().getFullYear()} Unde merg? – Orientare Civică. Serviciu informativ, fără
+            valoare de consultanță juridică.
+          </p>
+          <nav aria-label="Informații legale" className="flex flex-wrap gap-space-md">
+            {LEGAL_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
       </div>
     </footer>
   );

@@ -28,7 +28,7 @@ const FAQ_ITEMS = [
   {
     question: 'Ce fac dacă nu găsesc instituția potrivită?',
     answer:
-      'Poți contacta linia civică gratuită 0800 008 123 sau te poți adresa primăriei locale pentru îndrumare.',
+      'Te poți adresa primăriei locale pentru îndrumare — funcționarii de acolo pot direcționa orice sesizare către instituția competentă.',
   },
 ];
 
