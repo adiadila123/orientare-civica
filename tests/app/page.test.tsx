@@ -4,6 +4,10 @@ import userEvent from '@testing-library/user-event';
 import HomePage from '@/app/page';
 import type { TriageResponse } from '@/lib/types';
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
 const sampleResponse: TriageResponse = {
   primary_intent: 'problema_anaf',
   urgency: 'normal',

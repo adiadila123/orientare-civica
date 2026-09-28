@@ -1,3 +1,7 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { InstitutionCard } from '@/components/InstitutionCard';
 import { StepNumber } from '@/components/StepNumber';
@@ -22,6 +26,41 @@ interface AnalysisResultProps {
 }
 
 export function AnalysisResult({ result }: AnalysisResultProps) {
+  const router = useRouter();
+  const [isCreatingCase, setIsCreatingCase] = useState(false);
+  const [caseError, setCaseError] = useState<string | null>(null);
+
+  const isContestable = Boolean(
+    result.institution && (result.institution.iban || result.institution.associated_court)
+  );
+
+  async function handleGenerateContestation() {
+    if (!result.institution) {
+      return;
+    }
+    setIsCreatingCase(true);
+    setCaseError(null);
+    try {
+      const response = await fetch('/api/cases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          description: result.explanation,
+          institutionCode: result.institution.code,
+          aiAnalysis: result,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('create-failed');
+      }
+      const created = await response.json();
+      router.push(`/dosare/${created.id}`);
+    } catch {
+      setCaseError('Nu am putut genera contestația. Încearcă din nou.');
+      setIsCreatingCase(false);
+    }
+  }
+
   return (
     <div
       role="region"
@@ -74,6 +113,24 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
           Nu am putut identifica exact instituția potrivită pentru această problemă. Verifică
           manual sau contactează primăria locală pentru îndrumare.
         </p>
+      )}
+
+      {isContestable && (
+        <div className="flex flex-col gap-space-xs">
+          <button
+            type="button"
+            onClick={handleGenerateContestation}
+            disabled={isCreatingCase}
+            className="bg-primary text-on-primary rounded-lg px-space-md py-2 font-label-lg text-label-lg disabled:opacity-50 self-start"
+          >
+            {isCreatingCase ? 'Se generează...' : 'Generează contestația'}
+          </button>
+          {caseError && (
+            <p role="alert" className="font-label-sm text-label-sm text-error">
+              {caseError}
+            </p>
+          )}
+        </div>
       )}
     </div>
   );

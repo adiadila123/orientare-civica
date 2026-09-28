@@ -1,7 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { AnalysisResult } from '@/components/AnalysisResult';
 import type { TriageResponse } from '@/lib/types';
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
 
 const baseResult: TriageResponse = {
   primary_intent: 'problema_anaf',
@@ -23,6 +27,14 @@ const baseResult: TriageResponse = {
     phone: null,
     email: null,
     address: null,
+  },
+};
+
+const contestableResult: TriageResponse = {
+  ...baseResult,
+  institution: {
+    ...baseResult.institution!,
+    iban: 'RO49AAAA1B31007593840001',
   },
 };
 
@@ -62,5 +74,15 @@ describe('AnalysisResult', () => {
   it('shows the recommended channel as a badge', () => {
     render(<AnalysisResult result={baseResult} />);
     expect(screen.getByText('Online')).toBeInTheDocument();
+  });
+
+  it('shows the generate-contestation button when the institution is contestable', () => {
+    render(<AnalysisResult result={contestableResult} />);
+    expect(screen.getByRole('button', { name: 'Generează contestația' })).toBeInTheDocument();
+  });
+
+  it('does not show the generate-contestation button when the institution is not contestable', () => {
+    render(<AnalysisResult result={baseResult} />);
+    expect(screen.queryByRole('button', { name: 'Generează contestația' })).not.toBeInTheDocument();
   });
 });
