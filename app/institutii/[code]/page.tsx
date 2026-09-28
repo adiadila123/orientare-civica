@@ -106,8 +106,8 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
           <h2 className="font-title-md text-title-md text-on-surface mb-space-xs">Termen legal</h2>
           <p className="font-body-sm text-body-sm text-on-surface-variant">
             Ai la dispoziție {LEGAL_DEADLINE_DAYS} zile calendaristice de la comunicarea procesului-verbal
-            pentru a depune contestația, conform O.G. nr. 2/2001. Cuantumul taxei de timbru poate varia —
-            verifică suma actuală direct cu instituția înainte de plată.
+            pentru a depune contestația, conform art. 31 din O.G. nr. 2/2001. Taxa judiciară de timbru este
+            de {STAMP_DUTY_AMOUNT}, conform art. 19 din O.U.G. nr. 80/2013 privind taxele judiciare de timbru.
           </p>
         </div>
       )}
