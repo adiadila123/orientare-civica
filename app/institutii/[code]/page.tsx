@@ -81,8 +81,24 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
 
   const requiredDocuments = isContestable ? CONTESTATION_DOCUMENTS : COMPLAINT_DOCUMENTS;
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'GovernmentOrganization',
+    name: institution.name,
+    ...(institution.description && { description: institution.description }),
+    ...(institution.website_url && { url: institution.website_url }),
+    ...(institution.phone && { telephone: institution.phone }),
+    ...(institution.email && { email: institution.email }),
+    ...(institution.address && { address: institution.address }),
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-margin py-space-xl flex flex-col gap-space-lg">
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
+      />
       <div className="flex flex-col gap-space-xs">
         <h1 className="font-headline-lg text-headline-lg text-on-surface">{institution.name}</h1>
         {institution.description && (

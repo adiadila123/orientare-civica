@@ -87,6 +87,31 @@ describe('InstitutionGuidePage', () => {
     expect(screen.getByText(/Completează o sesizare sau cerere/)).toBeInTheDocument();
   });
 
+  it('embeds GovernmentOrganization JSON-LD built only from real institution fields', async () => {
+    vi.mocked(findInstitution).mockResolvedValue(anaf);
+
+    const { container } = render(
+      await InstitutionGuidePage({
+        params: Promise.resolve({ code: 'anaf' }),
+        searchParams: Promise.resolve({}),
+      })
+    );
+
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(script).not.toBeNull();
+    const jsonLd = JSON.parse(script!.innerHTML);
+
+    expect(jsonLd).toMatchObject({
+      '@context': 'https://schema.org',
+      '@type': 'GovernmentOrganization',
+      name: anaf.name,
+      url: anaf.website_url,
+      telephone: anaf.phone,
+      address: anaf.address,
+    });
+    expect(jsonLd.description).toBeUndefined();
+  });
+
   it('calls notFound when the institution does not exist', async () => {
     vi.mocked(findInstitution).mockResolvedValue(null);
 
