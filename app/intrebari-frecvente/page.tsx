@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { FaqAccordion } from '@/components/FaqAccordion';
 
 export const metadata: Metadata = {
   title: 'Întrebări frecvente — Unde Merg?',
@@ -35,14 +36,7 @@ export default function IntrebariFrecventePage() {
   return (
     <div className="max-w-3xl mx-auto px-margin py-space-xl flex flex-col gap-space-lg">
       <h1 className="font-headline-lg text-headline-lg text-on-surface">Întrebări frecvente</h1>
-      <dl className="flex flex-col gap-space-md">
-        {FAQ_ITEMS.map((item) => (
-          <div key={item.question} className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
-            <dt className="font-title-md text-title-md text-on-surface mb-space-xs">{item.question}</dt>
-            <dd className="font-body-sm text-body-sm text-on-surface-variant">{item.answer}</dd>
-          </div>
-        ))}
-      </dl>
+      <FaqAccordion items={FAQ_ITEMS} />
     </div>
   );
 }
