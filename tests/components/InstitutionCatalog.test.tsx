@@ -30,6 +30,19 @@ const anpc: Institution = {
   address: null,
 };
 
+const primarie: Institution = {
+  id: '3',
+  code: 'PRIMARIE',
+  name: 'Primăria (generică, locală)',
+  description: 'Sesizări și amenzi la nivel local; site-ul variază în funcție de localitate.',
+  category: 'administratie_locala',
+  website_url: null,
+  contact_form_url: null,
+  phone: null,
+  email: null,
+  address: null,
+};
+
 describe('InstitutionCatalog', () => {
   it('renders every institution by default', () => {
     render(<InstitutionCatalog institutions={[anaf, anpc]} />);
@@ -89,5 +102,28 @@ describe('InstitutionCatalog', () => {
 
     expect(screen.getByText(anaf.name)).toBeInTheDocument();
     expect(screen.queryByText(anpc.name)).not.toBeInTheDocument();
+  });
+
+  it('personalizes PRIMARIE with the chosen locality, without fabricating contact data', async () => {
+    const user = userEvent.setup();
+    render(<InstitutionCatalog institutions={[anaf, primarie]} />);
+
+    await user.selectOptions(screen.getByLabelText('Județ'), 'Alba');
+    await user.selectOptions(screen.getByLabelText('Localitate'), 'Albac');
+
+    expect(screen.getByText('Primăria — Albac, jud. Alba')).toBeInTheDocument();
+    expect(screen.queryByText('Primăria (generică, locală)')).not.toBeInTheDocument();
+    expect(screen.getByText(/Caută online „Primăria Albac”/)).toBeInTheDocument();
+    expect(screen.getByText(anaf.name)).toBeInTheDocument();
+  });
+
+  it('does not personalize national institutions like ANAF when a locality is chosen', async () => {
+    const user = userEvent.setup();
+    render(<InstitutionCatalog institutions={[anaf, primarie]} />);
+
+    await user.selectOptions(screen.getByLabelText('Județ'), 'Alba');
+    await user.selectOptions(screen.getByLabelText('Localitate'), 'Albac');
+
+    expect(screen.getByText(anaf.name)).toBeInTheDocument();
   });
 });

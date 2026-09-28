@@ -2,7 +2,22 @@
 
 import { useMemo, useState } from 'react';
 import { InstitutionCard } from '@/components/InstitutionCard';
+import { LocationSelector, type LocationSelection } from '@/components/LocationSelector';
 import type { Institution } from '@/lib/types';
+
+const LOCALITY_PERSONALIZED_CODES = new Set(['PRIMARIE', 'POLITIE_LOCALA']);
+
+function personalizeForLocation(institution: Institution, location: LocationSelection | null): Institution {
+  if (!location?.localitate || !LOCALITY_PERSONALIZED_CODES.has(institution.code)) {
+    return institution;
+  }
+  const baseName = institution.name.replace(/\s*\(generică, locală\)\s*$/, '');
+  return {
+    ...institution,
+    name: `${baseName} — ${location.localitate}, jud. ${location.judet}`,
+    description: `${institution.description ?? ''} Caută online „${institution.name.split(' (')[0]} ${location.localitate}” pentru datele de contact oficiale.`.trim(),
+  };
+}
 
 const CATEGORY_LABELS: Record<string, string> = {
   protectia_consumatorului: 'Protecția consumatorilor',
@@ -31,6 +46,7 @@ interface InstitutionCatalogProps {
 export function InstitutionCatalog({ institutions }: InstitutionCatalogProps) {
   const [searchText, setSearchText] = useState('');
   const [activeCategory, setActiveCategory] = useState(ALL_CATEGORY);
+  const [location, setLocation] = useState<LocationSelection | null>(null);
 
   const categories = useMemo(() => {
     const seen = new Set<string>();
@@ -70,6 +86,7 @@ export function InstitutionCatalog({ institutions }: InstitutionCatalogProps) {
           aria-label="Caută o instituție"
           className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-space-sm py-2 font-body-sm text-body-sm text-on-surface focus-visible:outline-2 focus-visible:outline-secondary"
         />
+        <LocationSelector onChange={setLocation} />
         <div className="flex flex-wrap gap-space-sm" role="group" aria-label="Filtrează după categorie">
           <button
             type="button"
@@ -100,7 +117,10 @@ export function InstitutionCatalog({ institutions }: InstitutionCatalogProps) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
           {filtered.map((institution) => (
-            <InstitutionCard key={institution.code} institution={institution} />
+            <InstitutionCard
+              key={institution.code}
+              institution={personalizeForLocation(institution, location)}
+            />
           ))}
         </div>
       )}
