@@ -30,10 +30,10 @@ const anaf: Institution = {
   phone: '031 403 91 60',
   email: null,
   address: 'Str. Apolodor nr. 17, București',
-  associated_court: null,
-  iban: 'RO49AAAA1B31007593840001',
-  cod_venit: '20.01.01.01',
-  cui: '22222222',
+  associated_court: 'Judecătoria în a cărei rază teritorială a fost săvârșită contravenția',
+  iban: null,
+  cod_venit: null,
+  cui: null,
   wait_time_minutes: 25,
 };
 
@@ -50,27 +50,9 @@ describe('InstitutionGuidePage', () => {
 
     expect(screen.getByRole('heading', { name: anaf.name })).toBeInTheDocument();
     expect(screen.getByText(/Ai la dispoziție 15 zile calendaristice/)).toBeInTheDocument();
-    expect(screen.getByText(/Achită taxa de timbru de 20,00 LEI către IBAN/)).toBeInTheDocument();
+    expect(screen.getByText(/Achită taxa de timbru de 20,00 LEI/)).toBeInTheDocument();
+    expect(screen.getByText(/Coduri IBAN/)).toBeInTheDocument();
     expect(screen.getByText('Copie act de identitate')).toBeInTheDocument();
-  });
-
-  it('falls back to a generic payment step when IBAN/cod venit/CUI are unknown', async () => {
-    vi.mocked(findInstitution).mockResolvedValue({
-      ...anaf,
-      iban: null,
-      cod_venit: null,
-      cui: null,
-      associated_court: 'Judecătoria Sectorului 1 București',
-    });
-
-    render(
-      await InstitutionGuidePage({
-        params: Promise.resolve({ code: 'anaf' }),
-        searchParams: Promise.resolve({}),
-      })
-    );
-
-    expect(screen.getByText(/detaliile de plată se obțin de la instituție/)).toBeInTheDocument();
   });
 
   it('calls notFound when the institution does not exist', async () => {
@@ -97,9 +79,9 @@ describe('InstitutionGuidePage', () => {
       email: null,
       address: null,
       associated_court: 'Judecătoria de sector/localitate',
-      iban: 'RO49AAAA1B31007593840002',
-      cod_venit: '21.02.05.02',
-      cui: '33333333',
+      iban: null,
+      cod_venit: null,
+      cui: null,
       wait_time_minutes: 40,
     });
 
