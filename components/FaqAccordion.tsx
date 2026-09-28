@@ -19,10 +19,10 @@ export function FaqAccordion({ items }: FaqAccordionProps) {
           key={item.question}
           className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg"
         >
-          <Accordion.Header>
-            <Accordion.Trigger className="flex w-full items-center justify-between gap-space-md text-left font-title-md text-title-md text-on-surface">
+          <Accordion.Header render={<h2 />}>
+            <Accordion.Trigger className="group flex w-full items-center justify-between gap-space-md text-left font-title-md text-title-md text-on-surface">
               {item.question}
-              <span aria-hidden="true" className="shrink-0 transition-transform data-[panel-open]:rotate-45">
+              <span aria-hidden="true" className="shrink-0 transition-transform group-data-[panel-open]:rotate-45">
                 +
               </span>
             </Accordion.Trigger>
