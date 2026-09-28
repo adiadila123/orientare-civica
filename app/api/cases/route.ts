@@ -17,6 +17,7 @@ export async function POST(req: Request) {
       userDescription: description,
       aiAnalysis: body?.aiAnalysis ?? null,
       institutionCode,
+      grounds: typeof body?.grounds === 'string' && body.grounds.trim().length > 0 ? body.grounds.trim() : null,
     });
     return NextResponse.json(created, { status: 201 });
   } catch (error) {

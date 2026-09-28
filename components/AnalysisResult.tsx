@@ -23,16 +23,15 @@ const LOW_CONFIDENCE_THRESHOLD = 0.7;
 
 interface AnalysisResultProps {
   result: TriageResponse;
+  description: string;
 }
 
-export function AnalysisResult({ result }: AnalysisResultProps) {
+export function AnalysisResult({ result, description }: AnalysisResultProps) {
   const router = useRouter();
   const [isCreatingCase, setIsCreatingCase] = useState(false);
   const [caseError, setCaseError] = useState<string | null>(null);
 
-  const isContestable = Boolean(
-    result.institution && (result.institution.iban || result.institution.associated_court)
-  );
+  const isContestable = Boolean(result.institution && result.institution.associated_court);
 
   async function handleGenerateContestation() {
     if (!result.institution) {
@@ -45,7 +44,8 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          description: result.explanation,
+          description,
+          grounds: result.explanation,
           institutionCode: result.institution.code,
           aiAnalysis: result,
         }),

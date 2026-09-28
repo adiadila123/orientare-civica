@@ -3,12 +3,19 @@ import { createDb } from '@/lib/db';
 import { updateCase } from '@/lib/cases';
 import { isValidCnp } from '@/lib/cnp';
 
+const MAX_PV_AMOUNT = 2_147_483_647; // Postgres int4 upper bound
+
 export async function PUT(req: Request, props: RouteContext<'/api/cases/[id]'>) {
   const { id } = await props.params;
   const body = await req.json().catch(() => null);
 
   if (!body || typeof body.petitionerCnp !== 'string' || !isValidCnp(body.petitionerCnp)) {
     return NextResponse.json({ error: 'CNP invalid' }, { status: 400 });
+  }
+
+  const pvAmount = typeof body.pvAmount === 'number' ? body.pvAmount : 0;
+  if (!Number.isInteger(pvAmount) || pvAmount < 0 || pvAmount > MAX_PV_AMOUNT) {
+    return NextResponse.json({ error: 'Suma amenzii este invalidă' }, { status: 400 });
   }
 
   try {
@@ -21,8 +28,8 @@ export async function PUT(req: Request, props: RouteContext<'/api/cases/[id]'>) 
       petitionerPhone: typeof body.petitionerPhone === 'string' ? body.petitionerPhone : null,
       pvSeries: typeof body.pvSeries === 'string' ? body.pvSeries : '',
       pvNumber: typeof body.pvNumber === 'string' ? body.pvNumber : '',
-      pvIssueDate: typeof body.pvIssueDate === 'string' ? body.pvIssueDate : '',
-      pvAmount: typeof body.pvAmount === 'number' ? body.pvAmount : 0,
+      pvIssueDate: typeof body.pvIssueDate === 'string' && body.pvIssueDate.length > 0 ? body.pvIssueDate : null,
+      pvAmount,
       pvPenaltyPoints: typeof body.pvPenaltyPoints === 'number' ? body.pvPenaltyPoints : null,
       pvIssuingAgent: typeof body.pvIssuingAgent === 'string' ? body.pvIssuingAgent : null,
       grounds: typeof body.grounds === 'string' ? body.grounds : '',

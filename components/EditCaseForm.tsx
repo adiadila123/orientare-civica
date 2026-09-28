@@ -23,13 +23,18 @@ export function EditCaseForm({ caseRecord, onClose, onSaved }: EditCaseFormProps
   const [pvNumber, setPvNumber] = useState(caseRecord.pv_number ?? '');
   const [pvIssueDate, setPvIssueDate] = useState(caseRecord.pv_issue_date ?? '');
   const [pvAmount, setPvAmount] = useState(caseRecord.pv_amount?.toString() ?? '');
+  const [pvIssuingAgent, setPvIssuingAgent] = useState(caseRecord.pv_issuing_agent ?? '');
+  const [pvPenaltyPoints, setPvPenaltyPoints] = useState(caseRecord.pv_penalty_points?.toString() ?? '');
   const [grounds, setGrounds] = useState(caseRecord.grounds ?? '');
   const [annexes, setAnnexes] = useState<string[]>(caseRecord.annexes);
   const [newAnnex, setNewAnnex] = useState('');
 
   const [cnpError, setCnpError] = useState<string | null>(null);
+  const [pvAmountError, setPvAmountError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [lastAttemptAt, setLastAttemptAt] = useState<number | null>(null);
+
+  const MAX_PV_AMOUNT = 2_147_483_647;
 
   function addAnnex() {
     if (newAnnex.trim().length === 0) {
@@ -52,10 +57,10 @@ export function EditCaseForm({ caseRecord, onClose, onSaved }: EditCaseFormProps
       petitionerPhone: caseRecord.petitioner_phone,
       pvSeries,
       pvNumber,
-      pvIssueDate,
+      pvIssueDate: pvIssueDate || null,
       pvAmount: Number(pvAmount) || 0,
-      pvPenaltyPoints: caseRecord.pv_penalty_points,
-      pvIssuingAgent: caseRecord.pv_issuing_agent,
+      pvPenaltyPoints: pvPenaltyPoints ? Number(pvPenaltyPoints) : null,
+      pvIssuingAgent: pvIssuingAgent || null,
       grounds,
       annexes,
     };
@@ -75,11 +80,26 @@ export function EditCaseForm({ caseRecord, onClose, onSaved }: EditCaseFormProps
   }
 
   async function handleSave() {
+    let hasError = false;
     if (!isValidCnp(petitionerCnp)) {
       setCnpError('CNP invalid (trebuie să conțină exact 13 cifre valide)');
+      hasError = true;
+    } else {
+      setCnpError(null);
+    }
+
+    const amount = Number(pvAmount) || 0;
+    if (!Number.isInteger(amount) || amount < 0 || amount > MAX_PV_AMOUNT) {
+      setPvAmountError('Suma amenzii este invalidă');
+      hasError = true;
+    } else {
+      setPvAmountError(null);
+    }
+
+    if (hasError) {
       return;
     }
-    setCnpError(null);
+
     setSaveState('saving');
     setLastAttemptAt(Date.now());
 
@@ -113,8 +133,7 @@ export function EditCaseForm({ caseRecord, onClose, onSaved }: EditCaseFormProps
     >
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-on-surface/40" />
-        <Dialog.Popup className="fixed inset-0 z-50 flex items-center justify-center p-space-md outline-none">
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-lg">
+        <Dialog.Popup className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-lg outline-none">
             <div className="flex items-center justify-between">
               <Dialog.Title className="font-title-md text-title-md text-on-surface">
                 Editează datele contestației
@@ -153,13 +172,18 @@ export function EditCaseForm({ caseRecord, onClose, onSaved }: EditCaseFormProps
                   className="rounded-lg border border-outline-variant px-space-sm py-2 font-body-sm text-body-sm text-on-surface"
                 />
               </label>
-              <label className="flex flex-col gap-1 font-label-md text-label-md text-on-surface-variant">
-                CNP
+              <div className="flex flex-col gap-1">
+                <label htmlFor="cnp-input" className="font-label-md text-label-md text-on-surface-variant">
+                  CNP
+                </label>
                 <div className="flex gap-space-sm items-center">
                   <input
+                    id="cnp-input"
                     type={cnpVisible ? 'text' : 'password'}
                     value={petitionerCnp}
                     onChange={(e) => setPetitionerCnp(e.target.value)}
+                    aria-invalid={cnpError ? true : undefined}
+                    aria-describedby={cnpError ? 'cnp-error' : undefined}
                     className="rounded-lg border border-outline-variant px-space-sm py-2 font-body-sm text-body-sm text-on-surface flex-1"
                   />
                   <button
@@ -171,11 +195,11 @@ export function EditCaseForm({ caseRecord, onClose, onSaved }: EditCaseFormProps
                   </button>
                 </div>
                 {cnpError && (
-                  <p role="alert" className="font-label-sm text-label-sm text-error">
+                  <p id="cnp-error" role="alert" className="font-label-sm text-label-sm text-error">
                     {cnpError}
                   </p>
                 )}
-              </label>
+              </div>
               <label className="flex flex-col gap-1 font-label-md text-label-md text-on-surface-variant">
                 Adresă
                 <input
@@ -228,6 +252,30 @@ export function EditCaseForm({ caseRecord, onClose, onSaved }: EditCaseFormProps
                   type="number"
                   value={pvAmount}
                   onChange={(e) => setPvAmount(e.target.value)}
+                  aria-invalid={pvAmountError ? true : undefined}
+                  aria-describedby={pvAmountError ? 'pv-amount-error' : undefined}
+                  className="rounded-lg border border-outline-variant px-space-sm py-2 font-body-sm text-body-sm text-on-surface"
+                />
+              </label>
+              {pvAmountError && (
+                <p id="pv-amount-error" role="alert" className="font-label-sm text-label-sm text-error">
+                  {pvAmountError}
+                </p>
+              )}
+              <label className="flex flex-col gap-1 font-label-md text-label-md text-on-surface-variant">
+                Agent emitent
+                <input
+                  value={pvIssuingAgent}
+                  onChange={(e) => setPvIssuingAgent(e.target.value)}
+                  className="rounded-lg border border-outline-variant px-space-sm py-2 font-body-sm text-body-sm text-on-surface"
+                />
+              </label>
+              <label className="flex flex-col gap-1 font-label-md text-label-md text-on-surface-variant">
+                Puncte de penalizare
+                <input
+                  type="number"
+                  value={pvPenaltyPoints}
+                  onChange={(e) => setPvPenaltyPoints(e.target.value)}
                   className="rounded-lg border border-outline-variant px-space-sm py-2 font-body-sm text-body-sm text-on-surface"
                 />
               </label>
@@ -281,7 +329,6 @@ export function EditCaseForm({ caseRecord, onClose, onSaved }: EditCaseFormProps
             >
               {saveState === 'saving' ? 'Se salvează...' : 'Salvează'}
             </button>
-          </div>
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>

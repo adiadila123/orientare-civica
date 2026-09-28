@@ -146,7 +146,7 @@ describe('CaseSchema', () => {
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.created_at).toBe('2026-09-28T10:00:00.000Z');
-      expect(result.data.pv_issue_date).toBe('2026-09-01T00:00:00.000Z');
+      expect(result.data.pv_issue_date).toBe('2026-09-01');
       expect(result.data.updated_at).toBe('2026-09-28T10:00:00.000Z');
     }
   });

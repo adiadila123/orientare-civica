@@ -11,6 +11,7 @@ const TRUST_INDICATORS = ['100% Gratuit', 'Fără cont necesar', 'Confidențial'
 
 export default function HomePage() {
   const [result, setResult] = useState<TriageResponse | null>(null);
+  const [lastDescription, setLastDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,6 +19,7 @@ export default function HomePage() {
     setIsLoading(true);
     setError(null);
     setResult(null);
+    setLastDescription(description);
 
     try {
       const response = await fetch('/api/triage', {
@@ -79,7 +81,7 @@ export default function HomePage() {
           {error}
         </p>
       )}
-      {result && <AnalysisResult result={result} />}
+      {result && <AnalysisResult result={result} description={lastDescription} />}
     </div>
   );
 }

@@ -6,6 +6,7 @@ export interface CreateCaseInput {
   userDescription: string;
   aiAnalysis: unknown;
   institutionCode: string;
+  grounds: string | null;
 }
 
 export async function createCase(
@@ -13,8 +14,8 @@ export async function createCase(
   input: CreateCaseInput
 ): Promise<Case> {
   const rows = await sql`
-    INSERT INTO cases (user_description, ai_analysis, institution_code)
-    VALUES (${input.userDescription}, ${JSON.stringify(input.aiAnalysis)}, ${input.institutionCode})
+    INSERT INTO cases (user_description, ai_analysis, institution_code, grounds)
+    VALUES (${input.userDescription}, ${JSON.stringify(input.aiAnalysis)}, ${input.institutionCode}, ${input.grounds})
     RETURNING *
   `;
   return CaseSchema.parse(rows[0]);
@@ -41,7 +42,7 @@ export interface UpdateCaseInput {
   petitionerPhone: string | null;
   pvSeries: string;
   pvNumber: string;
-  pvIssueDate: string;
+  pvIssueDate: string | null;
   pvAmount: number;
   pvPenaltyPoints: number | null;
   pvIssuingAgent: string | null;

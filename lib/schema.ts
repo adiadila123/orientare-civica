@@ -34,6 +34,20 @@ const dateAsIsoString = z.preprocess(
   z.string()
 );
 
+// Postgres `date` columns have no time component - extracting the calendar
+// day via UTC getters (rather than toISOString(), which is fine for
+// timestamptz but can drift a day depending on local render timezone)
+// keeps this exact, and produces the YYYY-MM-DD shape <input type="date"> needs.
+const dateOnlyAsIsoDate = z.preprocess((val) => {
+  if (val instanceof Date) {
+    const year = val.getUTCFullYear();
+    const month = String(val.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(val.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  return val;
+}, z.string());
+
 export const CaseSchema = z.object({
   id: z.string(),
   case_number: z.string(),
@@ -51,7 +65,7 @@ export const CaseSchema = z.object({
   petitioner_phone: z.string().nullable(),
   pv_series: z.string().nullable(),
   pv_number: z.string().nullable(),
-  pv_issue_date: dateAsIsoString.nullable(),
+  pv_issue_date: dateOnlyAsIsoDate.nullable(),
   pv_amount: z.number().int().nullable(),
   pv_penalty_points: z.number().int().nullable(),
   pv_issuing_agent: z.string().nullable(),

@@ -47,6 +47,7 @@ describe('createCase', () => {
       userDescription: 'Am primit o amendă.',
       aiAnalysis: null,
       institutionCode: 'PRIMARIE',
+      grounds: null,
     });
     expect(result).toEqual(sampleCase);
     expect(sql).toHaveBeenCalledTimes(1);
@@ -72,6 +73,18 @@ describe('findCase', () => {
   it('returns null when the row fails schema validation', async () => {
     const sql = createFakeSql([{ ...sampleCase, revision: 'not-a-number' }]);
     expect(await findCase(sql, '1')).toBeNull();
+  });
+
+  it('converts a pv_issue_date Date object to a plain YYYY-MM-DD string, not a full ISO datetime', async () => {
+    const rawRow = {
+      ...sampleCase,
+      pv_issue_date: new Date('2026-09-01T00:00:00.000Z'),
+      created_at: new Date('2026-09-28T10:00:00.000Z'),
+      updated_at: new Date('2026-09-28T10:00:00.000Z'),
+    };
+    const sql = createFakeSql([rawRow]);
+    const result = await findCase(sql, '1');
+    expect(result?.pv_issue_date).toBe('2026-09-01');
   });
 });
 

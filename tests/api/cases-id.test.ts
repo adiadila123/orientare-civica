@@ -48,6 +48,24 @@ describe('PUT /api/cases/[id]', () => {
     expect(response.status).toBe(400);
   });
 
+  it('returns 400 when pvAmount overflows a Postgres int4 column', async () => {
+    const response = await PUT(makeRequest({ ...validBody, pvAmount: 99999999999 }), {
+      params: Promise.resolve({ id: '1' }),
+    });
+    expect(response.status).toBe(400);
+    expect(updateCase).not.toHaveBeenCalled();
+  });
+
+  it('saves a null pv_issue_date instead of an empty string, when no PV date was entered yet', async () => {
+    vi.mocked(updateCase).mockResolvedValue(null);
+    await PUT(makeRequest({ ...validBody, pvIssueDate: '' }), { params: Promise.resolve({ id: '1' }) });
+    expect(updateCase).toHaveBeenCalledWith(
+      expect.anything(),
+      '1',
+      expect.objectContaining({ pvIssueDate: null })
+    );
+  });
+
   it('updates and returns the case on a valid CNP', async () => {
     vi.mocked(updateCase).mockResolvedValue({
       id: '1',
