@@ -78,6 +78,33 @@ describe('EditCaseForm', () => {
     expect(screen.getByLabelText('CNP')).toHaveValue('1900010140017');
   });
 
+  it('downloads a JSON backup of the entered data when the backup button is clicked', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }));
+
+    const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+    render(<EditCaseForm caseRecord={caseRecord} onClose={vi.fn()} onSaved={vi.fn()} />);
+    await user.type(screen.getByLabelText('Nume și prenume'), 'Ion Popescu');
+    await user.type(screen.getByLabelText('CNP'), '1900010140017');
+    await user.click(screen.getByRole('button', { name: 'Salvează' }));
+    await screen.findByRole('button', { name: 'Descarcă backup' });
+
+    await user.click(screen.getByRole('button', { name: 'Descarcă backup' }));
+
+    expect(createObjectURLSpy).toHaveBeenCalledTimes(1);
+    const blobArg = createObjectURLSpy.mock.calls[0][0] as Blob;
+    expect(blobArg.type).toBe('application/json');
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURLSpy).toHaveBeenCalledWith('blob:mock-url');
+
+    createObjectURLSpy.mockRestore();
+    revokeObjectURLSpy.mockRestore();
+    clickSpy.mockRestore();
+  });
+
   it('toggles CNP visibility', async () => {
     const user = userEvent.setup();
     render(<EditCaseForm caseRecord={caseRecord} onClose={vi.fn()} onSaved={vi.fn()} />);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { LegalDocumentPreview } from '@/components/LegalDocumentPreview';
 import { EditCaseForm } from '@/components/EditCaseForm';
 import type { Case, Institution } from '@/lib/types';
@@ -15,11 +15,18 @@ export function CaseView({ initialCase, institution }: CaseViewProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  useEffect(() => {
+    if (!showSuccess) {
+      return;
+    }
+    const timeoutId = setTimeout(() => setShowSuccess(false), 4000);
+    return () => clearTimeout(timeoutId);
+  }, [showSuccess]);
+
   function handleSaved(updated: Case) {
     setCaseRecord(updated);
     setIsEditing(false);
     setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 4000);
   }
 
   return (
