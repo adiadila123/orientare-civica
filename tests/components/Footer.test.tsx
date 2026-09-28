@@ -12,7 +12,6 @@ describe('Footer', () => {
   it('renders navigation links to every page', () => {
     render(<Footer />);
     expect(screen.getByRole('link', { name: 'Acasă' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Cum funcționează' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Instituții' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Întrebări frecvente' })).toBeInTheDocument();
   });

@@ -2,7 +2,6 @@ import Link from 'next/link';
 
 const FOOTER_LINKS = [
   { href: '/', label: 'Acasă' },
-  { href: '/cum-functioneaza', label: 'Cum funcționează' },
   { href: '/institutii', label: 'Instituții' },
   { href: '/intrebari-frecvente', label: 'Întrebări frecvente' },
 ];
