@@ -1,0 +1,272 @@
+'use client';
+
+import { useState } from 'react';
+import { isValidCnp } from '@/lib/cnp';
+import type { Case } from '@/lib/types';
+
+interface EditCaseFormProps {
+  caseRecord: Case;
+  onClose: () => void;
+  onSaved: (updated: Case) => void;
+}
+
+type SaveState = 'idle' | 'saving' | 'error';
+
+export function EditCaseForm({ caseRecord, onClose, onSaved }: EditCaseFormProps) {
+  const [petitionerName, setPetitionerName] = useState(caseRecord.petitioner_name ?? '');
+  const [petitionerCnp, setPetitionerCnp] = useState(caseRecord.petitioner_cnp ?? '');
+  const [cnpVisible, setCnpVisible] = useState(false);
+  const [petitionerAddress, setPetitionerAddress] = useState(caseRecord.petitioner_address ?? '');
+  const [petitionerEmail, setPetitionerEmail] = useState(caseRecord.petitioner_email ?? '');
+  const [pvSeries, setPvSeries] = useState(caseRecord.pv_series ?? '');
+  const [pvNumber, setPvNumber] = useState(caseRecord.pv_number ?? '');
+  const [pvIssueDate, setPvIssueDate] = useState(caseRecord.pv_issue_date ?? '');
+  const [pvAmount, setPvAmount] = useState(caseRecord.pv_amount?.toString() ?? '');
+  const [grounds, setGrounds] = useState(caseRecord.grounds ?? '');
+  const [annexes, setAnnexes] = useState<string[]>(caseRecord.annexes);
+  const [newAnnex, setNewAnnex] = useState('');
+
+  const [cnpError, setCnpError] = useState<string | null>(null);
+  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [lastAttemptAt, setLastAttemptAt] = useState<number | null>(null);
+
+  function addAnnex() {
+    if (newAnnex.trim().length === 0) {
+      return;
+    }
+    setAnnexes((current) => [...current, newAnnex.trim()]);
+    setNewAnnex('');
+  }
+
+  function removeAnnex(annex: string) {
+    setAnnexes((current) => current.filter((item) => item !== annex));
+  }
+
+  function buildPayload() {
+    return {
+      petitionerName,
+      petitionerCnp,
+      petitionerAddress,
+      petitionerEmail: petitionerEmail || null,
+      petitionerPhone: caseRecord.petitioner_phone,
+      pvSeries,
+      pvNumber,
+      pvIssueDate,
+      pvAmount: Number(pvAmount) || 0,
+      pvPenaltyPoints: caseRecord.pv_penalty_points,
+      pvIssuingAgent: caseRecord.pv_issuing_agent,
+      grounds,
+      annexes,
+    };
+  }
+
+  function downloadBackup() {
+    const payload = buildPayload();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `backup_contestatie_${caseRecord.case_number}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleSave() {
+    if (!isValidCnp(petitionerCnp)) {
+      setCnpError('CNP invalid (trebuie să conțină exact 13 cifre valide)');
+      return;
+    }
+    setCnpError(null);
+    setSaveState('saving');
+    setLastAttemptAt(Date.now());
+
+    try {
+      const response = await fetch(`/api/cases/${caseRecord.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildPayload()),
+      });
+
+      if (!response.ok) {
+        throw new Error('save-failed');
+      }
+
+      const updated = (await response.json()) as Case;
+      setSaveState('idle');
+      onSaved(updated);
+    } catch {
+      setSaveState('error');
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/40 p-space-md">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-lg">
+        <div className="flex items-center justify-between">
+          <h2 className="font-title-md text-title-md text-on-surface">Editează datele contestației</h2>
+          <button type="button" onClick={onClose} aria-label="Închide" className="text-on-surface-variant">
+            ✕
+          </button>
+        </div>
+
+        {saveState === 'error' && (
+          <div role="alert" className="bg-error-container rounded-lg p-space-md flex flex-col gap-space-sm">
+            <p className="font-body-sm text-body-sm text-on-error-container">
+              Datele tale NU au fost pierdute. A apărut o eroare de conexiune la salvare.
+            </p>
+            <p className="font-label-sm text-label-sm text-on-error-container">
+              Ultima încercare: {lastAttemptAt ? new Date(lastAttemptAt).toLocaleTimeString('ro-RO') : '—'}
+            </p>
+            <div className="flex gap-space-sm">
+              <button type="button" onClick={downloadBackup} className="text-secondary underline underline-offset-2">
+                Descarcă backup
+              </button>
+              <button type="button" onClick={handleSave} className="text-secondary underline underline-offset-2">
+                Reîncearcă
+              </button>
+            </div>
+          </div>
+        )}
+
+        <fieldset className="flex flex-col gap-space-sm">
+          <legend className="font-title-md text-title-md text-on-surface mb-space-xs">Petent</legend>
+          <label className="flex flex-col gap-1 font-label-md text-label-md text-on-surface-variant">
+            Nume și prenume
+            <input
+              value={petitionerName}
+              onChange={(e) => setPetitionerName(e.target.value)}
+              className="rounded-lg border border-outline-variant px-space-sm py-2 font-body-sm text-body-sm text-on-surface"
+            />
+          </label>
+          <label className="flex flex-col gap-1 font-label-md text-label-md text-on-surface-variant">
+            CNP
+            <div className="flex gap-space-sm items-center">
+              <input
+                type={cnpVisible ? 'text' : 'password'}
+                value={petitionerCnp}
+                onChange={(e) => setPetitionerCnp(e.target.value)}
+                className="rounded-lg border border-outline-variant px-space-sm py-2 font-body-sm text-body-sm text-on-surface flex-1"
+              />
+              <button
+                type="button"
+                onClick={() => setCnpVisible((visible) => !visible)}
+                className="text-secondary underline underline-offset-2"
+              >
+                {cnpVisible ? 'Ascunde' : 'Arată'}
+              </button>
+            </div>
+            {cnpError && (
+              <p role="alert" className="font-label-sm text-label-sm text-error">
+                {cnpError}
+              </p>
+            )}
+          </label>
+          <label className="flex flex-col gap-1 font-label-md text-label-md text-on-surface-variant">
+            Adresă
+            <input
+              value={petitionerAddress}
+              onChange={(e) => setPetitionerAddress(e.target.value)}
+              className="rounded-lg border border-outline-variant px-space-sm py-2 font-body-sm text-body-sm text-on-surface"
+            />
+          </label>
+          <label className="flex flex-col gap-1 font-label-md text-label-md text-on-surface-variant">
+            Email
+            <input
+              type="email"
+              value={petitionerEmail}
+              onChange={(e) => setPetitionerEmail(e.target.value)}
+              className="rounded-lg border border-outline-variant px-space-sm py-2 font-body-sm text-body-sm text-on-surface"
+            />
+          </label>
+        </fieldset>
+
+        <fieldset className="flex flex-col gap-space-sm">
+          <legend className="font-title-md text-title-md text-on-surface mb-space-xs">PV & sancțiune</legend>
+          <label className="flex flex-col gap-1 font-label-md text-label-md text-on-surface-variant">
+            Serie PV
+            <input
+              value={pvSeries}
+              onChange={(e) => setPvSeries(e.target.value)}
+              className="rounded-lg border border-outline-variant px-space-sm py-2 font-body-sm text-body-sm text-on-surface"
+            />
+          </label>
+          <label className="flex flex-col gap-1 font-label-md text-label-md text-on-surface-variant">
+            Număr PV
+            <input
+              value={pvNumber}
+              onChange={(e) => setPvNumber(e.target.value)}
+              className="rounded-lg border border-outline-variant px-space-sm py-2 font-body-sm text-body-sm text-on-surface"
+            />
+          </label>
+          <label className="flex flex-col gap-1 font-label-md text-label-md text-on-surface-variant">
+            Data emiterii
+            <input
+              type="date"
+              value={pvIssueDate}
+              onChange={(e) => setPvIssueDate(e.target.value)}
+              className="rounded-lg border border-outline-variant px-space-sm py-2 font-body-sm text-body-sm text-on-surface"
+            />
+          </label>
+          <label className="flex flex-col gap-1 font-label-md text-label-md text-on-surface-variant">
+            Suma amenzii (LEI)
+            <input
+              type="number"
+              value={pvAmount}
+              onChange={(e) => setPvAmount(e.target.value)}
+              className="rounded-lg border border-outline-variant px-space-sm py-2 font-body-sm text-body-sm text-on-surface"
+            />
+          </label>
+        </fieldset>
+
+        <fieldset className="flex flex-col gap-space-sm">
+          <legend className="font-title-md text-title-md text-on-surface mb-space-xs">Motivele</legend>
+          <textarea
+            value={grounds}
+            onChange={(e) => setGrounds(e.target.value)}
+            rows={4}
+            className="rounded-lg border border-outline-variant px-space-sm py-2 font-body-sm text-body-sm text-on-surface"
+          />
+        </fieldset>
+
+        <fieldset className="flex flex-col gap-space-sm">
+          <legend className="font-title-md text-title-md text-on-surface mb-space-xs">Anexe</legend>
+          <ul className="flex flex-col gap-space-xs">
+            {annexes.map((annex) => (
+              <li key={annex} className="flex items-center justify-between font-body-sm text-body-sm text-on-surface">
+                <span>{annex}</span>
+                <button
+                  type="button"
+                  onClick={() => removeAnnex(annex)}
+                  aria-label={`Șterge ${annex}`}
+                  className="text-error"
+                >
+                  ✕
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="flex gap-space-sm">
+            <input
+              value={newAnnex}
+              onChange={(e) => setNewAnnex(e.target.value)}
+              placeholder="Denumire document"
+              className="flex-1 rounded-lg border border-outline-variant px-space-sm py-2 font-body-sm text-body-sm text-on-surface"
+            />
+            <button type="button" onClick={addAnnex} className="text-secondary underline underline-offset-2">
+              Adaugă
+            </button>
+          </div>
+        </fieldset>
+
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saveState === 'saving'}
+          className="bg-primary text-on-primary rounded-lg px-space-md py-2 font-label-lg text-label-lg disabled:opacity-50"
+        >
+          {saveState === 'saving' ? 'Se salvează...' : 'Salvează'}
+        </button>
+      </div>
+    </div>
+  );
+}

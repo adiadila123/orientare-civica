@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 vi.mock('@/lib/db', () => ({
   createDb: vi.fn().mockReturnValue({}),
@@ -97,5 +98,23 @@ describe('CasePage', () => {
     await expect(
       CasePage({ params: Promise.resolve({ id: '1' }), searchParams: Promise.resolve({}) })
     ).rejects.toThrow('NEXT_NOT_FOUND');
+  });
+
+  it('opens the edit form, saves, and shows a success toast with the updated document', async () => {
+    const user = userEvent.setup();
+    vi.mocked(findCase).mockResolvedValue(caseRecord);
+    vi.mocked(findInstitution).mockResolvedValue(institution);
+    const updated = { ...caseRecord, petitioner_name: 'Ion Popescu', revision: 2 };
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(updated) }));
+
+    render(await CasePage({ params: Promise.resolve({ id: '1' }), searchParams: Promise.resolve({}) }));
+
+    await user.click(screen.getByRole('button', { name: 'Editează' }));
+    await user.type(screen.getByLabelText('Nume și prenume'), 'Ion Popescu');
+    await user.type(screen.getByLabelText('CNP'), '1900010140017');
+    await user.click(screen.getByRole('button', { name: 'Salvează' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Datele au fost salvate cu succes.');
+    expect(screen.getByText(/Ion Popescu/)).toBeInTheDocument();
   });
 });

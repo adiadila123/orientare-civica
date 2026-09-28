@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { createDb } from '@/lib/db';
 import { findCase } from '@/lib/cases';
 import { findInstitution } from '@/lib/institutions';
-import { LegalDocumentPreview } from '@/components/LegalDocumentPreview';
+import { CaseView } from '@/components/CaseView';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,10 +28,5 @@ export default async function CasePage(props: PageProps<'/dosare/[id]'>) {
     notFound();
   }
 
-  return (
-    <div className="max-w-5xl mx-auto px-margin py-space-xl flex flex-col gap-space-lg">
-      <h1 className="font-headline-lg text-headline-lg text-on-surface">Dosar {caseRecord.case_number}</h1>
-      <LegalDocumentPreview caseRecord={caseRecord} institution={institution} />
-    </div>
-  );
+  return <CaseView initialCase={caseRecord} institution={institution} />;
 }
