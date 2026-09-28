@@ -16,6 +16,8 @@ export const InstitutionSchema = z.object({
   cod_venit: z.string().nullable().optional(),
   cui: z.string().nullable().optional(),
   wait_time_minutes: z.number().int().nullable().optional(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
 });
 
 export const TriageResultSchema = z.object({

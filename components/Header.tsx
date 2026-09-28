@@ -4,6 +4,7 @@ import { Logo } from '@/components/Logo';
 const NAV_LINKS = [
   { href: '/', label: 'Acasă' },
   { href: '/institutii', label: 'Instituții' },
+  { href: '/harta', label: 'Hartă' },
   { href: '/intrebari-frecvente', label: 'Întrebări frecvente' },
 ];
 

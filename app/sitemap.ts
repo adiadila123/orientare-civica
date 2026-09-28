@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic';
 const STATIC_ROUTES = [
   '',
   '/institutii',
+  '/harta',
   '/intrebari-frecvente',
   '/termeni-si-conditii',
   '/confidentialitate',
