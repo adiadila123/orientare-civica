@@ -28,6 +28,11 @@ export default function HomePage() {
         body: JSON.stringify({ description }),
       });
 
+      if (response.status === 429) {
+        setError('Prea multe cereri într-un timp scurt. Așteaptă un minut și încearcă din nou.');
+        return;
+      }
+
       if (!response.ok) {
         throw new Error('request-failed');
       }

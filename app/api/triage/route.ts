@@ -4,10 +4,18 @@ import { TriageResultSchema } from '@/lib/schema';
 import { TRIAGE_SYSTEM_PROMPT, extractTriageJson } from '@/lib/triage';
 import { findInstitution } from '@/lib/institutions';
 import { createDb } from '@/lib/db';
+import { isRateLimited, getClientIp } from '@/lib/rateLimit';
 
 const MAX_DESCRIPTION_LENGTH = 2000;
 
 export async function POST(req: Request) {
+  if (isRateLimited(getClientIp(req))) {
+    return NextResponse.json(
+      { error: 'Prea multe cereri. Încearcă din nou peste un minut.' },
+      { status: 429 }
+    );
+  }
+
   const body = await req.json().catch(() => null);
   const description = typeof body?.description === 'string' ? body.description.trim() : '';
 

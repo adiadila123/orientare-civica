@@ -60,6 +60,20 @@ describe('HomePage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Nu am putut analiza problema');
   });
 
+  it('shows a rate-limit-specific message when the server returns 429', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 429, json: () => Promise.resolve({}) })
+    );
+
+    render(<HomePage />);
+    await user.type(screen.getByLabelText('Descrierea problemei'), 'Am o problemă cu ANAF');
+    await user.click(screen.getByRole('button', { name: 'Analizează situația' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Prea multe cereri');
+  });
+
   it('shows the analysis-progress stepper while loading', async () => {
     const user = userEvent.setup();
     let resolveFetch: (value: unknown) => void = () => {};

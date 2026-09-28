@@ -19,6 +19,7 @@ vi.mock('@/lib/institutions', () => ({
 
 import { POST } from '@/app/api/triage/route';
 import { findInstitution } from '@/lib/institutions';
+import { __resetRateLimiterForTests } from '@/lib/rateLimit';
 
 const validTriageResult = {
   primary_intent: 'problema_anaf',
@@ -40,6 +41,7 @@ function makeRequest(body: unknown) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  __resetRateLimiterForTests();
   process.env.GROQ_API_KEY = 'test-key';
   process.env.DATABASE_URL = 'postgres://test';
 });
@@ -141,5 +143,28 @@ describe('POST /api/triage', () => {
 
     expect(response.status).toBe(200);
     expect(json.institution).toBeNull();
+  });
+
+  it('returns 429 after too many requests from the same client in a short window', async () => {
+    createCompletionMock.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(validTriageResult) } }],
+    });
+    vi.mocked(findInstitution).mockResolvedValue(null);
+
+    function makeRequestFromIp() {
+      return new Request('http://localhost/api/triage', {
+        method: 'POST',
+        headers: { 'x-forwarded-for': '203.0.113.9' },
+        body: JSON.stringify({ description: 'Am o problemă cu declarația fiscală' }),
+      });
+    }
+
+    let lastResponse;
+    for (let i = 0; i < 9; i++) {
+      lastResponse = await POST(makeRequestFromIp());
+    }
+
+    expect(lastResponse!.status).toBe(429);
+    expect(createCompletionMock).toHaveBeenCalledTimes(8);
   });
 });
