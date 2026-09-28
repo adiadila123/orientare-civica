@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { InstitutionSchema } from '@/lib/schema';
+import { InstitutionSchema, CaseSchema } from '@/lib/schema';
 
 describe('InstitutionSchema', () => {
   it('accepts a valid institution', () => {
@@ -82,5 +82,37 @@ describe('seed data', () => {
     for (const code of expectedCodes) {
       expect(seed).toContain(`'${code}'`);
     }
+  });
+});
+
+describe('CaseSchema', () => {
+  it('accepts a freshly-created case with only the v1 fields populated', () => {
+    const result = CaseSchema.safeParse({
+      id: '1',
+      case_number: 'GD-2026-0001',
+      user_description: 'Am primit o amendă.',
+      ai_analysis: null,
+      recommended_institution_id: null,
+      institution_code: 'PRIMARIE',
+      status: 'new',
+      session_id: null,
+      created_at: '2026-09-28T10:00:00.000Z',
+      petitioner_name: null,
+      petitioner_cnp: null,
+      petitioner_address: null,
+      petitioner_email: null,
+      petitioner_phone: null,
+      pv_series: null,
+      pv_number: null,
+      pv_issue_date: null,
+      pv_amount: null,
+      pv_penalty_points: null,
+      pv_issuing_agent: null,
+      grounds: null,
+      annexes: [],
+      revision: 1,
+      updated_at: '2026-09-28T10:00:00.000Z',
+    });
+    expect(result.success).toBe(true);
   });
 });
