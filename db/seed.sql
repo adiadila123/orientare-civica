@@ -1,6 +1,6 @@
 insert into institutions (code, name, description, category, website_url, associated_court, iban, cod_venit, cui, wait_time_minutes) values
-  ('ANPC', 'Autoritatea Națională pentru Protecția Consumatorilor', 'Instituția responsabilă pentru protecția drepturilor consumatorilor.', 'protectia_consumatorului', 'https://anpc.ro', 'Judecătoria în a cărei rază teritorială a fost săvârșită contravenția', null, null, null, 15),
-  ('ANAF', 'Agenția Națională de Administrare Fiscală', 'Administrează impozitele, taxele și contribuțiile sociale.', 'fiscal', 'https://www.anaf.ro', 'Judecătoria în a cărei rază teritorială a fost săvârșită contravenția', null, null, null, 25),
+  ('ANPC', 'Autoritatea Națională pentru Protecția Consumatorilor', 'Instituția responsabilă pentru protecția drepturilor consumatorilor.', 'protectia_consumatorului', 'https://anpc.ro', null, null, null, null, 15),
+  ('ANAF', 'Agenția Națională de Administrare Fiscală', 'Administrează impozitele, taxele și contribuțiile sociale.', 'fiscal', 'https://www.anaf.ro', null, null, null, null, 25),
   ('PRIMARIE', 'Primăria (generică, locală)', 'Sesizări și amenzi la nivel local; site-ul variază în funcție de localitate.', 'administratie_locala', null, 'Judecătoria de sector/localitate', null, null, null, 40),
   ('POLITIE_LOCALA', 'Poliția Locală', 'Sesizări stradale și contravenții locale; site-ul variază în funcție de localitate.', 'ordine_publica', null, 'Judecătoria de sector/localitate', null, null, null, 20),
   ('ANRE', 'Autoritatea Națională de Reglementare în Domeniul Energiei', 'Reglementează piața de energie electrică și gaze naturale.', 'energie', 'https://www.anre.ro', null, null, null, null, 10),

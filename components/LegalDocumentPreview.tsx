@@ -15,8 +15,8 @@ export function LegalDocumentPreview({ caseRecord, institution }: LegalDocumentP
       <p className="text-right">{formatDate(caseRecord.pv_issue_date)}</p>
       <h1 className="text-center font-title-md text-title-md">PLÂNGERE CONTRAVENȚIONALĂ</h1>
       <p>
-        Către: {institution.name}
-        {institution.associated_court ? `, prin ${institution.associated_court}` : ''}
+        Către: {institution.associated_court || 'Judecătoria competentă'}
+        {institution.name ? ` (proces-verbal emis de ${institution.name})` : ''}
       </p>
 
       <section>

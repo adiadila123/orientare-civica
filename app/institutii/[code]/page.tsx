@@ -46,7 +46,7 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
     notFound();
   }
 
-  const isContestable = Boolean(institution.iban || institution.associated_court);
+  const isContestable = Boolean(institution.associated_court);
 
   const resolutionPaths = [
     institution.contact_form_url
@@ -67,11 +67,9 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
   const steps = isContestable
     ? [
         'Completează cererea de contestație folosind modelul recomandat.',
-        `Achită taxa de timbru de ${STAMP_DUTY_AMOUNT}. Contul de trezorerie corect diferă în funcție de județul tău — găsește codul IBAN corespunzător pe pagina oficială ANAF „Coduri IBAN": anaf.ro → Asistență contribuabili → Plata oblig. fiscale → Coduri IBAN.`,
-        hasResolutionPath
-          ? `Depune cererea și dovada plății la ${institution.name}, prin canalul ales mai sus.`
-          : `Depune cererea și dovada plății la ${institution.name} — verifică site-ul oficial sau contactează primăria/poliția locală din zona ta pentru canalul de depunere.`,
-        'Așteaptă răspunsul instituției în termenul legal.',
+        `Achită taxa de timbru de ${STAMP_DUTY_AMOUNT} la trezoreria/primăria din localitatea ta de domiciliu, conform art. 40 din O.U.G. nr. 80/2013 privind taxele judiciare de timbru.`,
+        `Depune cererea și dovada plății la ${institution.associated_court}.`,
+        'Așteaptă soluționarea de către instanță în termenul legal.',
       ]
     : [
         'Completează o sesizare sau cerere către instituție, descriind clar problema.',

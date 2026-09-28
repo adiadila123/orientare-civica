@@ -30,15 +30,50 @@ const anaf: Institution = {
   phone: '031 403 91 60',
   email: null,
   address: 'Str. Apolodor nr. 17, București',
-  associated_court: 'Judecătoria în a cărei rază teritorială a fost săvârșită contravenția',
+  associated_court: null,
   iban: null,
   cod_venit: null,
   cui: null,
   wait_time_minutes: 25,
 };
 
+const politieLocala: Institution = {
+  id: '4',
+  code: 'POLITIE_LOCALA',
+  name: 'Poliția Locală',
+  description: 'Sesizări stradale și contravenții locale; site-ul variază în funcție de localitate.',
+  category: 'ordine_publica',
+  website_url: null,
+  contact_form_url: null,
+  phone: null,
+  email: null,
+  address: null,
+  associated_court: 'Judecătoria de sector/localitate',
+  iban: null,
+  cod_venit: null,
+  cui: null,
+  wait_time_minutes: 20,
+};
+
 describe('InstitutionGuidePage', () => {
   it('renders the institution guide with the legal deadline, steps, and documents', async () => {
+    vi.mocked(findInstitution).mockResolvedValue(politieLocala);
+
+    render(
+      await InstitutionGuidePage({
+        params: Promise.resolve({ code: 'politie_locala' }),
+        searchParams: Promise.resolve({}),
+      })
+    );
+
+    expect(screen.getByRole('heading', { name: politieLocala.name })).toBeInTheDocument();
+    expect(screen.getByText(/Ai la dispoziție 15 zile calendaristice/)).toBeInTheDocument();
+    expect(screen.getByText(/Achită taxa de timbru de 20,00 LEI la trezoreria\/primăria/)).toBeInTheDocument();
+    expect(screen.getByText(/Depune cererea și dovada plății la Judecătoria de sector\/localitate/)).toBeInTheDocument();
+    expect(screen.getByText('Copie act de identitate')).toBeInTheDocument();
+  });
+
+  it('shows the shorter complaint variant for ANAF now that fine payments route through local UAT treasuries, not ANAF', async () => {
     vi.mocked(findInstitution).mockResolvedValue(anaf);
 
     render(
@@ -48,11 +83,8 @@ describe('InstitutionGuidePage', () => {
       })
     );
 
-    expect(screen.getByRole('heading', { name: anaf.name })).toBeInTheDocument();
-    expect(screen.getByText(/Ai la dispoziție 15 zile calendaristice/)).toBeInTheDocument();
-    expect(screen.getByText(/Achită taxa de timbru de 20,00 LEI/)).toBeInTheDocument();
-    expect(screen.getByText(/Coduri IBAN/)).toBeInTheDocument();
-    expect(screen.getByText('Copie act de identitate')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Termen legal' })).not.toBeInTheDocument();
+    expect(screen.getByText(/Completează o sesizare sau cerere/)).toBeInTheDocument();
   });
 
   it('calls notFound when the institution does not exist', async () => {
