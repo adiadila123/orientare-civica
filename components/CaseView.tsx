@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { LegalDocumentPreview } from '@/components/LegalDocumentPreview';
 import { EditCaseForm } from '@/components/EditCaseForm';
+import { CaseStatusTracker } from '@/components/CaseStatusTracker';
 import { buildContestationDeadlineIcs } from '@/lib/ics';
 import type { Case, Institution } from '@/lib/types';
 
@@ -89,6 +90,10 @@ export function CaseView({ initialCase, institution }: CaseViewProps) {
             Editează
           </button>
         </div>
+      </div>
+
+      <div className="print:hidden">
+        <CaseStatusTracker caseId={caseRecord.id} />
       </div>
 
       <LegalDocumentPreview caseRecord={caseRecord} institution={institution} />
