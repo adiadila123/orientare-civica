@@ -14,7 +14,7 @@ const LEGAL_LINKS = [
 
 export function Footer() {
   return (
-    <footer className="w-full bg-surface-container-low mt-space-xl">
+    <footer className="w-full bg-surface-container-low mt-space-xl print:hidden">
       <div className="max-w-7xl mx-auto px-margin py-space-xl flex flex-col gap-space-md">
         <nav aria-label="Navigare footer" className="flex flex-wrap gap-space-md md:hidden">
           {FOOTER_LINKS.map((link) => (

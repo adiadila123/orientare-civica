@@ -72,6 +72,17 @@ describe('CaseView', () => {
     expect(screen.queryByRole('button', { name: 'Adaugă termenul în calendar' })).not.toBeInTheDocument();
   });
 
+  it('calls window.print when the Descarcă PDF button is clicked', async () => {
+    const user = userEvent.setup();
+    const printSpy = vi.fn();
+    vi.stubGlobal('print', printSpy);
+
+    render(<CaseView initialCase={caseRecord} institution={contestableInstitution} />);
+    await user.click(screen.getByRole('button', { name: 'Descarcă PDF' }));
+
+    expect(printSpy).toHaveBeenCalledTimes(1);
+  });
+
   it('downloads an .ics file when the deadline-reminder button is clicked', async () => {
     const user = userEvent.setup();
     const createObjectURL = vi.fn().mockReturnValue('blob:mock-url');

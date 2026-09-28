@@ -52,17 +52,17 @@ export function CaseView({ initialCase, institution }: CaseViewProps) {
   const canRemindDeadline = Boolean(institution.associated_court && caseRecord.pv_issue_date);
 
   return (
-    <div className="max-w-5xl mx-auto px-margin py-space-xl flex flex-col gap-space-lg">
+    <div className="max-w-5xl mx-auto px-margin py-space-xl flex flex-col gap-space-lg print:p-0 print:max-w-none">
       {showSuccess && (
         <div
           role="status"
-          className="bg-tertiary-container text-on-tertiary-container rounded-lg p-space-md font-body-sm text-body-sm"
+          className="bg-tertiary-container text-on-tertiary-container rounded-lg p-space-md font-body-sm text-body-sm print:hidden"
         >
           Datele au fost salvate cu succes.
         </div>
       )}
 
-      <div className="flex items-center justify-between flex-wrap gap-space-sm">
+      <div className="flex items-center justify-between flex-wrap gap-space-sm print:hidden">
         <h1 className="font-headline-lg text-headline-lg text-on-surface">Dosar {caseRecord.case_number}</h1>
         <div className="flex gap-space-sm">
           {canRemindDeadline && (
@@ -74,6 +74,13 @@ export function CaseView({ initialCase, institution }: CaseViewProps) {
               Adaugă termenul în calendar
             </button>
           )}
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="rounded-lg border border-outline-variant px-space-md py-2 font-label-lg text-label-lg text-on-surface"
+          >
+            Descarcă PDF
+          </button>
           <button
             type="button"
             onClick={() => setIsEditing(true)}
