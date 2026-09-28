@@ -115,4 +115,39 @@ describe('CaseSchema', () => {
     });
     expect(result.success).toBe(true);
   });
+
+  it('coerces Date objects (as returned by the real Postgres driver) into ISO strings', () => {
+    const result = CaseSchema.safeParse({
+      id: '1',
+      case_number: 'GD-2026-0001',
+      user_description: 'Am primit o amendă.',
+      ai_analysis: null,
+      recommended_institution_id: null,
+      institution_code: 'PRIMARIE',
+      status: 'new',
+      session_id: null,
+      created_at: new Date('2026-09-28T10:00:00.000Z'),
+      petitioner_name: null,
+      petitioner_cnp: null,
+      petitioner_address: null,
+      petitioner_email: null,
+      petitioner_phone: null,
+      pv_series: null,
+      pv_number: null,
+      pv_issue_date: new Date('2026-09-01T00:00:00.000Z'),
+      pv_amount: null,
+      pv_penalty_points: null,
+      pv_issuing_agent: null,
+      grounds: null,
+      annexes: [],
+      revision: 1,
+      updated_at: new Date('2026-09-28T10:00:00.000Z'),
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.created_at).toBe('2026-09-28T10:00:00.000Z');
+      expect(result.data.pv_issue_date).toBe('2026-09-01T00:00:00.000Z');
+      expect(result.data.updated_at).toBe('2026-09-28T10:00:00.000Z');
+    }
+  });
 });

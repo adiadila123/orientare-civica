@@ -37,7 +37,12 @@ const sampleCase: Case = {
 
 describe('createCase', () => {
   it('inserts and returns the new case', async () => {
-    const sql = createFakeSql([sampleCase]);
+    const rawRow = {
+      ...sampleCase,
+      created_at: new Date('2026-09-28T10:00:00.000Z'),
+      updated_at: new Date('2026-09-28T10:00:00.000Z'),
+    };
+    const sql = createFakeSql([rawRow]);
     const result = await createCase(sql, {
       userDescription: 'Am primit o amendă.',
       aiAnalysis: null,
@@ -50,7 +55,12 @@ describe('createCase', () => {
 
 describe('findCase', () => {
   it('returns the matched case', async () => {
-    const sql = createFakeSql([sampleCase]);
+    const rawRow = {
+      ...sampleCase,
+      created_at: new Date('2026-09-28T10:00:00.000Z'),
+      updated_at: new Date('2026-09-28T10:00:00.000Z'),
+    };
+    const sql = createFakeSql([rawRow]);
     expect(await findCase(sql, '1')).toEqual(sampleCase);
   });
 
@@ -58,12 +68,23 @@ describe('findCase', () => {
     const sql = createFakeSql([]);
     expect(await findCase(sql, 'missing')).toBeNull();
   });
+
+  it('returns null when the row fails schema validation', async () => {
+    const sql = createFakeSql([{ ...sampleCase, revision: 'not-a-number' }]);
+    expect(await findCase(sql, '1')).toBeNull();
+  });
 });
 
 describe('updateCase', () => {
   it('updates petitioner/PV fields and increments the revision', async () => {
-    const updated = { ...sampleCase, petitioner_name: 'Ion Popescu', revision: 2 };
-    const sql = createFakeSql([updated]);
+    const updatedRow = {
+      ...sampleCase,
+      petitioner_name: 'Ion Popescu',
+      revision: 2,
+      created_at: new Date('2026-09-28T10:00:00.000Z'),
+      updated_at: new Date('2026-09-28T10:00:00.000Z'),
+    };
+    const sql = createFakeSql([updatedRow]);
     const result = await updateCase(sql, '1', {
       petitionerName: 'Ion Popescu',
       petitionerCnp: '1900010140017',
@@ -86,6 +107,26 @@ describe('updateCase', () => {
   it('returns null when the case does not exist', async () => {
     const sql = createFakeSql([]);
     const result = await updateCase(sql, 'missing', {
+      petitionerName: 'x',
+      petitionerCnp: '1900010140017',
+      petitionerAddress: 'x',
+      petitionerEmail: null,
+      petitionerPhone: null,
+      pvSeries: 'x',
+      pvNumber: 'x',
+      pvIssueDate: '2026-09-01',
+      pvAmount: 100,
+      pvPenaltyPoints: null,
+      pvIssuingAgent: null,
+      grounds: 'x',
+      annexes: [],
+    });
+    expect(result).toBeNull();
+  });
+
+  it('returns null when the updated row fails schema validation', async () => {
+    const sql = createFakeSql([{ ...sampleCase, revision: 'not-a-number' }]);
+    const result = await updateCase(sql, '1', {
       petitionerName: 'x',
       petitionerCnp: '1900010140017',
       petitionerAddress: 'x',

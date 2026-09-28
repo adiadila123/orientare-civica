@@ -29,6 +29,11 @@ export const TriageResultSchema = z.object({
   confidence: z.number().min(0).max(1),
 });
 
+const dateAsIsoString = z.preprocess(
+  (val) => (val instanceof Date ? val.toISOString() : val),
+  z.string()
+);
+
 export const CaseSchema = z.object({
   id: z.string(),
   case_number: z.string(),
@@ -38,7 +43,7 @@ export const CaseSchema = z.object({
   institution_code: z.string().nullable(),
   status: z.string(),
   session_id: z.string().nullable(),
-  created_at: z.string(),
+  created_at: dateAsIsoString,
   petitioner_name: z.string().nullable(),
   petitioner_cnp: z.string().nullable(),
   petitioner_address: z.string().nullable(),
@@ -46,12 +51,12 @@ export const CaseSchema = z.object({
   petitioner_phone: z.string().nullable(),
   pv_series: z.string().nullable(),
   pv_number: z.string().nullable(),
-  pv_issue_date: z.string().nullable(),
+  pv_issue_date: dateAsIsoString.nullable(),
   pv_amount: z.number().int().nullable(),
   pv_penalty_points: z.number().int().nullable(),
   pv_issuing_agent: z.string().nullable(),
   grounds: z.string().nullable(),
   annexes: z.array(z.string()),
   revision: z.number().int(),
-  updated_at: z.string(),
+  updated_at: dateAsIsoString,
 });
