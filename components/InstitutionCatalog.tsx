@@ -28,6 +28,8 @@ const CATEGORY_LABELS: Record<string, string> = {
   telecomunicatii: 'Telecomunicații',
   sanatate: 'Sănătate',
   munca: 'Muncă',
+  discriminare: 'Discriminare',
+  ombudsman: 'Ombudsman',
 };
 
 const ALL_CATEGORY = 'toate';

@@ -85,6 +85,9 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
     <div className="max-w-5xl mx-auto px-margin py-space-xl flex flex-col gap-space-lg">
       <div className="flex flex-col gap-space-xs">
         <h1 className="font-headline-lg text-headline-lg text-on-surface">{institution.name}</h1>
+        {institution.description && (
+          <p className="font-body-sm text-body-sm text-on-surface-variant">{institution.description}</p>
+        )}
         {institution.associated_court && (
           <p className="font-body-sm text-body-sm text-on-surface-variant">
             Instanța competentă: {institution.associated_court}
@@ -121,8 +124,7 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
         <div className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
           <h3 className="font-title-md text-title-md text-on-surface mb-space-xs">Contact</h3>
           <p className="font-body-sm text-body-sm text-on-surface-variant">
-            {institution.description ??
-              'Datele de contact pentru această instituție nu sunt disponibile momentan în platforma noastră.'}
+            Datele de contact pentru această instituție nu sunt disponibile momentan în platforma noastră.
           </p>
         </div>
       )}

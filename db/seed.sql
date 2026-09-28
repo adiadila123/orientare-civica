@@ -1,12 +1,14 @@
-insert into institutions (code, name, description, category, website_url, associated_court, iban, cod_venit, cui, wait_time_minutes) values
-  ('ANPC', 'Autoritatea Națională pentru Protecția Consumatorilor', 'Instituția responsabilă pentru protecția drepturilor consumatorilor.', 'protectia_consumatorului', 'https://anpc.ro', null, null, null, null, 15),
-  ('ANAF', 'Agenția Națională de Administrare Fiscală', 'Administrează impozitele, taxele și contribuțiile sociale.', 'fiscal', 'https://www.anaf.ro', null, null, null, null, 25),
-  ('PRIMARIE', 'Primăria (generică, locală)', 'Sesizări și amenzi la nivel local; site-ul variază în funcție de localitate.', 'administratie_locala', null, 'Judecătoria de sector/localitate', null, null, null, 40),
-  ('POLITIE_LOCALA', 'Poliția Locală', 'Sesizări stradale și contravenții locale; site-ul variază în funcție de localitate.', 'ordine_publica', null, 'Judecătoria de sector/localitate', null, null, null, 20),
-  ('ANRE', 'Autoritatea Națională de Reglementare în Domeniul Energiei', 'Reglementează piața de energie electrică și gaze naturale.', 'energie', 'https://www.anre.ro', null, null, null, null, 10),
-  ('ANCOM', 'Autoritatea Națională pentru Administrare și Reglementare în Comunicații', 'Reglementează piața de telecomunicații.', 'telecomunicatii', 'https://www.ancom.ro', null, null, null, null, 10),
-  ('CNAS', 'Casa Națională de Asigurări de Sănătate', 'Administrează sistemul de asigurări sociale de sănătate.', 'sanatate', 'https://cnas.ro', null, null, null, null, 30),
-  ('ITM', 'Inspecția Muncii', 'Controlează respectarea legislației muncii.', 'munca', 'https://www.inspectiamuncii.ro', null, null, null, null, 15)
+insert into institutions (code, name, description, category, website_url, associated_court, iban, cod_venit, cui, wait_time_minutes, phone, email, address) values
+  ('ANPC', 'Autoritatea Națională pentru Protecția Consumatorilor', 'Instituția responsabilă pentru protecția drepturilor consumatorilor.', 'protectia_consumatorului', 'https://anpc.ro', null, null, null, null, 15, null, null, null),
+  ('ANAF', 'Agenția Națională de Administrare Fiscală', 'Administrează impozitele, taxele și contribuțiile sociale.', 'fiscal', 'https://www.anaf.ro', null, null, null, null, 25, null, null, null),
+  ('PRIMARIE', 'Primăria (generică, locală)', 'Sesizări și amenzi la nivel local; site-ul variază în funcție de localitate.', 'administratie_locala', null, 'Judecătoria de sector/localitate', null, null, null, 40, null, null, null),
+  ('POLITIE_LOCALA', 'Poliția Locală', 'Sesizări stradale și contravenții locale; site-ul variază în funcție de localitate.', 'ordine_publica', null, 'Judecătoria de sector/localitate', null, null, null, 20, null, null, null),
+  ('ANRE', 'Autoritatea Națională de Reglementare în Domeniul Energiei', 'Reglementează piața de energie electrică și gaze naturale.', 'energie', 'https://www.anre.ro', null, null, null, null, 10, null, null, null),
+  ('ANCOM', 'Autoritatea Națională pentru Administrare și Reglementare în Comunicații', 'Reglementează piața de telecomunicații.', 'telecomunicatii', 'https://www.ancom.ro', null, null, null, null, 10, null, null, null),
+  ('CNAS', 'Casa Națională de Asigurări de Sănătate', 'Administrează sistemul de asigurări sociale de sănătate.', 'sanatate', 'https://cnas.ro', null, null, null, null, 30, null, null, null),
+  ('ITM', 'Inspecția Muncii', 'Controlează respectarea legislației muncii.', 'munca', 'https://www.inspectiamuncii.ro', null, null, null, null, 15, null, null, null),
+  ('CNCD', 'Consiliul Național pentru Combaterea Discriminării', 'Soluționează sesizări privind fapte de discriminare. Termen legal de depunere: 1 an de la data săvârșirii faptei sau de la data la care persoana lezată putea lua cunoștință de aceasta.', 'discriminare', 'https://www.cncd.ro', null, null, null, null, null, '021 312 65 78', 'support@cncd.ro', 'Piața Valter Mărăcineanu nr. 1-3, Sector 1, București'),
+  ('AVOCATUL_POPORULUI', 'Avocatul Poporului', 'Instituție de mediere între cetățeni și autoritățile publice; emite recomandări, fără forță executorie, pentru apărarea drepturilor și libertăților persoanelor fizice.', 'ombudsman', 'https://avp.ro', null, null, null, null, null, '021 312 71 34', 'petitii@avp.ro', 'Str. George Vraca nr. 8, Sector 1, București')
 on conflict (code) do update set
   name = excluded.name,
   description = excluded.description,
@@ -16,4 +18,7 @@ on conflict (code) do update set
   iban = excluded.iban,
   cod_venit = excluded.cod_venit,
   cui = excluded.cui,
-  wait_time_minutes = excluded.wait_time_minutes;
+  wait_time_minutes = excluded.wait_time_minutes,
+  phone = excluded.phone,
+  email = excluded.email,
+  address = excluded.address;

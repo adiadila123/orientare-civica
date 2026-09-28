@@ -22,7 +22,18 @@ describe('extractTriageJson', () => {
 
 describe('TRIAGE_SYSTEM_PROMPT', () => {
   it('lists every supported institution code', () => {
-    for (const code of ['ANPC', 'ANAF', 'PRIMARIE', 'POLITIE_LOCALA', 'ANRE', 'ANCOM', 'CNAS', 'ITM']) {
+    for (const code of [
+      'ANPC',
+      'ANAF',
+      'PRIMARIE',
+      'POLITIE_LOCALA',
+      'ANRE',
+      'ANCOM',
+      'CNAS',
+      'ITM',
+      'CNCD',
+      'AVOCATUL_POPORULUI',
+    ]) {
       expect(TRIAGE_SYSTEM_PROMPT).toContain(code);
     }
   });

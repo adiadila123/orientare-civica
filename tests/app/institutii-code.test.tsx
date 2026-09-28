@@ -129,6 +129,34 @@ describe('InstitutionGuidePage', () => {
     expect(screen.queryByRole('heading', { name: 'Date de contact' })).not.toBeInTheDocument();
   });
 
+  it('shows real contact details for CNCD without inventing a contravention deadline', async () => {
+    vi.mocked(findInstitution).mockResolvedValue({
+      id: '6',
+      code: 'CNCD',
+      name: 'Consiliul Național pentru Combaterea Discriminării',
+      description:
+        'Soluționează sesizări privind fapte de discriminare. Termen legal de depunere: 1 an de la data săvârșirii faptei sau de la data la care persoana lezată putea lua cunoștință de aceasta.',
+      category: 'discriminare',
+      website_url: 'https://www.cncd.ro',
+      contact_form_url: null,
+      phone: '021 312 65 78',
+      email: 'support@cncd.ro',
+      address: 'Piața Valter Mărăcineanu nr. 1-3, Sector 1, București',
+      associated_court: null,
+      iban: null,
+      cod_venit: null,
+      cui: null,
+      wait_time_minutes: null,
+    });
+
+    render(await InstitutionGuidePage({ params: Promise.resolve({ code: 'cncd' }), searchParams: Promise.resolve({}) }));
+
+    expect(screen.queryByRole('heading', { name: 'Termen legal' })).not.toBeInTheDocument();
+    expect(screen.getByText(/1 an de la data săvârșirii faptei/)).toBeInTheDocument();
+    expect(screen.getAllByText(/021 312 65 78/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Piața Valter Mărăcineanu nr\. 1-3, Sector 1, București/).length).toBeGreaterThan(0);
+  });
+
   it('shows the shorter complaint variant for a non-contestable regulatory institution', async () => {
     vi.mocked(findInstitution).mockResolvedValue({
       id: '5',

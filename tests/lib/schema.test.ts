@@ -78,7 +78,18 @@ describe('seed data', () => {
   it('includes every core institution code', () => {
     const seedPath = path.join(process.cwd(), 'db', 'seed.sql');
     const seed = readFileSync(seedPath, 'utf-8');
-    const expectedCodes = ['ANPC', 'ANAF', 'PRIMARIE', 'POLITIE_LOCALA', 'ANRE', 'ANCOM', 'CNAS', 'ITM'];
+    const expectedCodes = [
+      'ANPC',
+      'ANAF',
+      'PRIMARIE',
+      'POLITIE_LOCALA',
+      'ANRE',
+      'ANCOM',
+      'CNAS',
+      'ITM',
+      'CNCD',
+      'AVOCATUL_POPORULUI',
+    ];
     for (const code of expectedCodes) {
       expect(seed).toContain(`'${code}'`);
     }
