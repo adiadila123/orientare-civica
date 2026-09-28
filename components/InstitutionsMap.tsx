@@ -1,20 +1,22 @@
 'use client';
 
-import { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import type { Institution } from '@/lib/types';
 
-// Leaflet's default marker icon resolves relative image paths that break
-// under Next.js's bundler — point it at the actual bundled asset URLs.
+// Leaflet's default marker icon resolves relative image paths that don't
+// survive bundling (and Next's static-image-import object shape isn't
+// consistent for assets imported from node_modules under Turbopack vs.
+// Webpack) — pointing at the CDN copy, pinned to the installed version,
+// sidesteps both problems.
+const LEAFLET_VERSION = '1.9.4';
+const LEAFLET_CDN_BASE = `https://cdn.jsdelivr.net/npm/leaflet@${LEAFLET_VERSION}/dist/images`;
+
 const defaultIcon = L.icon({
-  iconRetinaUrl: markerIcon2x.src,
-  iconUrl: markerIcon.src,
-  shadowUrl: markerShadow.src,
+  iconRetinaUrl: `${LEAFLET_CDN_BASE}/marker-icon-2x.png`,
+  iconUrl: `${LEAFLET_CDN_BASE}/marker-icon.png`,
+  shadowUrl: `${LEAFLET_CDN_BASE}/marker-shadow.png`,
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
@@ -30,10 +32,6 @@ interface InstitutionsMapProps {
 }
 
 export function InstitutionsMap({ institutions }: InstitutionsMapProps) {
-  useEffect(() => {
-    L.Marker.prototype.options.icon = defaultIcon;
-  }, []);
-
   return (
     <MapContainer
       center={BUCHAREST_CENTER}
