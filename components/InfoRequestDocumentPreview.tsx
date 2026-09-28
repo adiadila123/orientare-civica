@@ -13,9 +13,9 @@ export function InfoRequestDocumentPreview({ infoRequest, institution }: InfoReq
   return (
     <div className="bg-white text-black mx-auto max-w-[210mm] p-space-xl shadow-sm font-body-md text-body-md flex flex-col gap-space-md print:shadow-none print:max-w-none print:p-0">
       <p className="text-right">{formatDate(infoRequest.updated_at)}</p>
-      <h1 className="text-center font-title-md text-title-md">
+      <h2 className="text-center font-title-md text-title-md">
         CERERE DE ACCES LA INFORMAȚII DE INTERES PUBLIC
-      </h1>
+      </h2>
       <p>Către: {institution.name}</p>
 
       <section>

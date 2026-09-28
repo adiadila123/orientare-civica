@@ -41,11 +41,13 @@ export function ProblemInput({ onSubmit, isLoading = false }: ProblemInputProps)
         onChange={(event) => setDescription(event.target.value)}
         placeholder="Ex: Am primit o amendă de la primărie și nu știu cum să o contest..."
         aria-label="Descrierea problemei"
+        aria-invalid={isTooShort ? true : undefined}
+        aria-describedby={isTooShort ? 'description-error' : undefined}
         maxLength={MAX_DESCRIPTION_LENGTH}
         rows={5}
       />
       {isTooShort && (
-        <p role="alert" className="font-label-sm text-label-sm text-error">
+        <p id="description-error" role="alert" className="font-label-sm text-label-sm text-error">
           {TOO_SHORT_MESSAGE}
         </p>
       )}

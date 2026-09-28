@@ -80,9 +80,9 @@ export function AnalysisResult({ result, description }: AnalysisResultProps) {
 
       {result.required_documents.length > 0 && (
         <div>
-          <h3 className="font-title-md text-title-md text-on-surface mb-space-xs">
+          <h2 className="font-title-md text-title-md text-on-surface mb-space-xs">
             Documente necesare
-          </h3>
+          </h2>
           <ul className="flex flex-col gap-space-xs">
             {result.required_documents.map((doc, index) => (
               <li key={index} className="flex items-center gap-space-xs font-body-sm text-body-sm">
@@ -95,7 +95,7 @@ export function AnalysisResult({ result, description }: AnalysisResultProps) {
       )}
 
       <div>
-        <h3 className="font-title-md text-title-md text-on-surface mb-space-xs">Pași următori</h3>
+        <h2 className="font-title-md text-title-md text-on-surface mb-space-xs">Pași următori</h2>
         <ol className="flex flex-col gap-space-sm">
           {result.next_steps.map((step, index) => (
             <li key={index} className="flex items-center gap-space-sm">

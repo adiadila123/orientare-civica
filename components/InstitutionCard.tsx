@@ -11,7 +11,7 @@ export function InstitutionCard({ institution }: InstitutionCardProps) {
   return (
     <Card className="shadow-sm ring-0">
       <CardHeader>
-        <CardTitle className="font-title-md text-title-md text-on-surface">
+        <CardTitle role="heading" aria-level={2} className="font-title-md text-title-md text-on-surface">
           {institution.name}
         </CardTitle>
       </CardHeader>

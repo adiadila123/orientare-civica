@@ -13,7 +13,7 @@ export function LegalDocumentPreview({ caseRecord, institution }: LegalDocumentP
   return (
     <div className="bg-white text-black mx-auto max-w-[210mm] p-space-xl shadow-sm font-body-md text-body-md flex flex-col gap-space-md print:shadow-none print:max-w-none print:p-0">
       <p className="text-right">{formatDate(caseRecord.pv_issue_date)}</p>
-      <h1 className="text-center font-title-md text-title-md">PLÂNGERE CONTRAVENȚIONALĂ</h1>
+      <h2 className="text-center font-title-md text-title-md">PLÂNGERE CONTRAVENȚIONALĂ</h2>
       <p>
         Către: {institution.associated_court || 'Judecătoria competentă'}
         {institution.name ? ` (proces-verbal emis de ${institution.name})` : ''}

@@ -132,14 +132,14 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-space-md">
           {resolutionPaths.map((path) => (
             <div key={path.title} className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
-              <h3 className="font-title-md text-title-md text-on-surface mb-space-xs">{path.title}</h3>
+              <h2 className="font-title-md text-title-md text-on-surface mb-space-xs">{path.title}</h2>
               <p className="font-body-sm text-body-sm text-on-surface-variant">{path.description}</p>
             </div>
           ))}
         </div>
       ) : (
         <div className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
-          <h3 className="font-title-md text-title-md text-on-surface mb-space-xs">Contact</h3>
+          <h2 className="font-title-md text-title-md text-on-surface mb-space-xs">Contact</h2>
           <p className="font-body-sm text-body-sm text-on-surface-variant">
             Datele de contact pentru această instituție nu sunt disponibile momentan în platforma noastră.
           </p>

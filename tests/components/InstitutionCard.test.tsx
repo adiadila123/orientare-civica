@@ -34,4 +34,10 @@ describe('InstitutionCard', () => {
     const link = screen.getByRole('link', { name: 'Vezi ghidul complet' });
     expect(link.className).not.toContain('underline');
   });
+
+  it('exposes the institution name as a real heading, not just a styled div', () => {
+    render(<InstitutionCard institution={institution} />);
+    const heading = screen.getByRole('heading', { name: institution.name });
+    expect(heading).toHaveAttribute('aria-level', '2');
+  });
 });
