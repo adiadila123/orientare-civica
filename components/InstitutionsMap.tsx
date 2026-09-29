@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, LayersControl, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Institution } from '@/lib/types';
@@ -69,12 +69,22 @@ export function InstitutionsMap({ institutions }: InstitutionsMapProps) {
         scrollWheelZoom={false}
         style={{ height: '500px', width: '100%', borderRadius: 'var(--radius-xl)' }}
       >
-        <TileLayer
-          attribution="Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ"
-          url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
-          maxNativeZoom={16}
-          maxZoom={19}
-        />
+        <LayersControl position="topright">
+          <LayersControl.BaseLayer checked name="Stradă">
+            <TileLayer
+              attribution="Sources: Esri, DeLorme, HERE, USGS, Intermap, increment P Corp., NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom"
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+              maxZoom={19}
+            />
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name="Satelit">
+            <TileLayer
+              attribution="Sources: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              maxZoom={19}
+            />
+          </LayersControl.BaseLayer>
+        </LayersControl>
         <FlyToSelection institution={selected} />
         {institutions.map((institution) => (
           <Marker key={institution.code} position={[institution.latitude, institution.longitude]} icon={defaultIcon}>

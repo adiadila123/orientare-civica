@@ -5,9 +5,15 @@ import type { MappableInstitution } from '@/components/InstitutionsMap';
 
 const flyTo = vi.fn();
 
+function LayersControlMock({ children }: { children: React.ReactNode }) {
+  return <div data-testid="layers-control">{children}</div>;
+}
+LayersControlMock.BaseLayer = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+
 vi.mock('react-leaflet', () => ({
   MapContainer: ({ children }: { children: React.ReactNode }) => <div data-testid="map">{children}</div>,
   TileLayer: () => null,
+  LayersControl: LayersControlMock,
   Marker: ({ children, position }: { children: React.ReactNode; position: [number, number] }) => (
     <div data-testid="marker" data-position={position.join(',')}>
       {children}
