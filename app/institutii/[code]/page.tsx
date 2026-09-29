@@ -84,7 +84,7 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
         hasResolutionPath
           ? 'Trimite sesizarea prin canalul ales mai sus.'
           : `Trimite sesizarea către ${institution.name} — verifică site-ul oficial pentru datele de contact.`,
-        'Așteaptă răspunsul instituției.',
+        'Ai dreptul la un răspuns în cel mult 30 de zile de la înregistrarea sesizării, indiferent dacă soluția e favorabilă sau nu, conform O.G. nr. 27/2002 privind soluționarea petițiilor.',
       ];
 
   const requiredDocuments = isContestable ? CONTESTATION_DOCUMENTS : COMPLAINT_DOCUMENTS;
@@ -169,7 +169,8 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
         <div className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
           <h2 className="font-title-md text-title-md text-on-surface mb-space-xs">Contact</h2>
           <p className="font-body-sm text-body-sm text-on-surface-variant">
-            Datele de contact pentru această instituție nu sunt disponibile momentan în platforma noastră.
+            Datele de contact variază în funcție de localitate. Caută online numele localității tale
+            împreună cu &bdquo;{institution.name}&rdquo; pentru sediul și canalele de contact exacte.
           </p>
         </div>
       )}

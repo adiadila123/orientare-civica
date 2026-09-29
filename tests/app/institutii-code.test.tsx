@@ -115,6 +115,8 @@ describe('InstitutionGuidePage', () => {
 
     expect(screen.queryByRole('heading', { name: 'Termen legal' })).not.toBeInTheDocument();
     expect(screen.getByText(/Completează o sesizare sau cerere/)).toBeInTheDocument();
+    expect(screen.getByText(/răspuns în cel mult 30 de zile/)).toBeInTheDocument();
+    expect(screen.getByText(/O\.G\. nr\. 27\/2002/)).toBeInTheDocument();
   });
 
   it('embeds GovernmentOrganization JSON-LD built only from real institution fields', async () => {
@@ -183,6 +185,9 @@ describe('InstitutionGuidePage', () => {
     expect(screen.queryByText('Depunerea online nu este disponibilă pentru această instituție.')).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Date de contact' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Găsește cea mai apropiată primărie' })).toBeInTheDocument();
+    expect(
+      screen.getByText(/Caută online numele localității tale împreună cu „Primăria \(generică, locală\)”/)
+    ).toBeInTheDocument();
   });
 
   it('does not show the nearest-townhall finder for institutions other than PRIMARIE', async () => {
