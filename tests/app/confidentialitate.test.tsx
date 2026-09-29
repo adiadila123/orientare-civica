@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import ConfidentialitatePage from '@/app/confidentialitate/page';
+import ConfidentialitatePage, { metadata } from '@/app/confidentialitate/page';
 
 describe('ConfidentialitatePage', () => {
+  it('sets a canonical URL', () => {
+    expect(metadata.alternates?.canonical).toBe('/confidentialitate');
+  });
+
   it('renders the page heading, the legal-review caveat, and the data-recipients section', () => {
     render(<ConfidentialitatePage />);
     expect(screen.getByRole('heading', { name: 'Politica de confidențialitate' })).toBeInTheDocument();

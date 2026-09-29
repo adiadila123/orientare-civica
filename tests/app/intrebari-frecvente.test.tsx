@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import IntrebariFrecventePage from '@/app/intrebari-frecvente/page';
+import IntrebariFrecventePage, { metadata } from '@/app/intrebari-frecvente/page';
 
 describe('IntrebariFrecventePage', () => {
+  it('sets a canonical URL', () => {
+    expect(metadata.alternates?.canonical).toBe('/intrebari-frecvente');
+  });
+
   it('renders the page heading and all FAQ questions', () => {
     render(<IntrebariFrecventePage />);
     expect(screen.getByRole('heading', { name: 'Întrebări frecvente' })).toBeInTheDocument();

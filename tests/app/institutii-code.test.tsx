@@ -16,7 +16,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
-import InstitutionGuidePage from '@/app/institutii/[code]/page';
+import InstitutionGuidePage, { generateMetadata } from '@/app/institutii/[code]/page';
 import { findInstitution } from '@/lib/institutions';
 import type { Institution } from '@/lib/types';
 
@@ -55,6 +55,35 @@ const politieLocala: Institution = {
   cui: null,
   wait_time_minutes: 20,
 };
+
+describe('generateMetadata', () => {
+  it('sets a canonical URL and openGraph fields for a found institution', async () => {
+    vi.mocked(findInstitution).mockResolvedValue(anaf);
+
+    const metadata = await generateMetadata({
+      params: Promise.resolve({ code: 'anaf' }),
+      searchParams: Promise.resolve({}),
+    });
+
+    expect(metadata.alternates?.canonical).toBe('/institutii/anaf');
+    expect(metadata.openGraph).toMatchObject({
+      title: `${anaf.name} — Ghid — Unde Merg?`,
+      description: `Ghid pas cu pas pentru ${anaf.name}: termen legal, pași și documente necesare.`,
+      url: '/institutii/anaf',
+    });
+  });
+
+  it('is not indexable when the institution does not exist', async () => {
+    vi.mocked(findInstitution).mockResolvedValue(null);
+
+    const metadata = await generateMetadata({
+      params: Promise.resolve({ code: 'necunoscut' }),
+      searchParams: Promise.resolve({}),
+    });
+
+    expect(metadata.robots).toEqual({ index: false, follow: false });
+  });
+});
 
 describe('InstitutionGuidePage', () => {
   it('renders the institution guide with the legal deadline, steps, and documents', async () => {

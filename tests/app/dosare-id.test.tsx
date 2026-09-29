@@ -21,7 +21,7 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
-import CasePage from '@/app/dosare/[id]/page';
+import CasePage, { metadata } from '@/app/dosare/[id]/page';
 import { findCase, findCasesByGroupId } from '@/lib/cases';
 import { findInstitution } from '@/lib/institutions';
 import type { Case, Institution } from '@/lib/types';
@@ -75,6 +75,10 @@ const institution: Institution = {
 describe('CasePage', () => {
   beforeEach(() => {
     vi.mocked(findCasesByGroupId).mockResolvedValue([caseRecord]);
+  });
+
+  it('is not indexable, since it may show personal data (nume, adresă)', () => {
+    expect(metadata.robots).toEqual({ index: false, follow: false });
   });
 
   it('renders the case number and document preview', async () => {

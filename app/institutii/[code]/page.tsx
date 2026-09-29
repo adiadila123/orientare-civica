@@ -29,12 +29,18 @@ export async function generateMetadata(
   const institution = await findInstitution(sql, code);
 
   if (!institution) {
-    return { title: 'Instituție negăsită — Unde Merg?' };
+    return { title: 'Instituție negăsită — Unde Merg?', robots: { index: false, follow: false } };
   }
 
+  const title = `${institution.name} — Ghid — Unde Merg?`;
+  const description = `Ghid pas cu pas pentru ${institution.name}: termen legal, pași și documente necesare.`;
+  const canonical = `/institutii/${institution.code.toLowerCase()}`;
+
   return {
-    title: `${institution.name} — Ghid — Unde Merg?`,
-    description: `Ghid pas cu pas pentru ${institution.name}: termen legal, pași și documente necesare.`,
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: { title, description, url: canonical },
   };
 }
 

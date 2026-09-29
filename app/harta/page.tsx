@@ -9,6 +9,11 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Harta instituțiilor — Unde Merg?',
   description: 'Sediile instituțiilor publice naționale, cu adrese reale, pe hartă.',
+  alternates: { canonical: '/harta' },
+  openGraph: {
+    title: 'Harta instituțiilor — Unde Merg?',
+    description: 'Sediile instituțiilor publice naționale, cu adrese reale, pe hartă.',
+  },
 };
 
 export default async function HartaPage() {

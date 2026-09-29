@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Politica de cookie-uri — Unde Merg?',
   description: 'Ce cookie-uri folosește (sau nu) Unde Merg? – Orientare Civică.',
+  alternates: { canonical: '/politica-cookie-uri' },
 };
 
 export default function PoliticaCookieUriPage() {

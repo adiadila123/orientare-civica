@@ -9,6 +9,9 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Dosarul tău — Unde Merg?',
+  // Personal data (nume, adresă) may appear on this page once filled in —
+  // never index it, and never let it show up in someone else's search results.
+  robots: { index: false, follow: false },
 };
 
 export default async function CasePage(props: PageProps<'/dosare/[id]'>) {

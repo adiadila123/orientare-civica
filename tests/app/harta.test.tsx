@@ -15,7 +15,7 @@ vi.mock('@/components/InstitutionsMapLoader', () => ({
   ),
 }));
 
-import HartaPage from '@/app/harta/page';
+import HartaPage, { metadata } from '@/app/harta/page';
 import { listInstitutions } from '@/lib/institutions';
 import type { Institution } from '@/lib/types';
 
@@ -36,6 +36,10 @@ function makeInstitution(overrides: Partial<Institution>): Institution {
 }
 
 describe('HartaPage', () => {
+  it('sets a canonical URL', () => {
+    expect(metadata.alternates?.canonical).toBe('/harta');
+  });
+
   it('only passes institutions that have real coordinates to the map', async () => {
     vi.mocked(listInstitutions).mockResolvedValue([
       makeInstitution({ code: 'ANAF', latitude: 44.42, longitude: 26.09 }),

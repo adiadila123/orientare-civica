@@ -9,10 +9,14 @@ vi.mock('@/lib/institutions', () => ({
   listInstitutions: vi.fn(),
 }));
 
-import InstitutiiPage from '@/app/institutii/page';
+import InstitutiiPage, { metadata } from '@/app/institutii/page';
 import { listInstitutions } from '@/lib/institutions';
 
 describe('InstitutiiPage', () => {
+  it('sets a canonical URL', () => {
+    expect(metadata.alternates?.canonical).toBe('/institutii');
+  });
+
   it('renders every institution returned by listInstitutions', async () => {
     vi.mocked(listInstitutions).mockResolvedValue([
       {

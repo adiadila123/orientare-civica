@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Termeni și condiții — Unde Merg?',
   description: 'Termenii și condițiile de utilizare a serviciului Unde Merg? – Orientare Civică.',
+  alternates: { canonical: '/termeni-si-conditii' },
 };
 
 export default function TermeniSiConditiiPage() {

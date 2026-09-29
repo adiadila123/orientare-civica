@@ -24,7 +24,7 @@ vi.mock('@/lib/myRecordsStorage', () => ({
   rememberRecord: vi.fn(),
 }));
 
-import InfoRequestPage from '@/app/solicitare-informatii/[id]/page';
+import InfoRequestPage, { metadata } from '@/app/solicitare-informatii/[id]/page';
 import { findInfoRequest } from '@/lib/infoRequests';
 import { findInstitution } from '@/lib/institutions';
 import { rememberRecord } from '@/lib/myRecordsStorage';
@@ -58,6 +58,10 @@ const institution: Institution = {
 };
 
 describe('InfoRequestPage', () => {
+  it('is not indexable, since it may show personal data (nume, adresă)', () => {
+    expect(metadata.robots).toEqual({ index: false, follow: false });
+  });
+
   it('renders the request number and document preview', async () => {
     vi.mocked(findInfoRequest).mockResolvedValue(infoRequest);
     vi.mocked(findInstitution).mockResolvedValue(institution);

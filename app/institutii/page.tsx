@@ -6,6 +6,11 @@ import { InstitutionCatalog } from '@/components/InstitutionCatalog';
 export const metadata: Metadata = {
   title: 'Instituții — Unde Merg?',
   description: 'Lista instituțiilor publice către care Unde Merg? te poate direcționa.',
+  alternates: { canonical: '/institutii' },
+  openGraph: {
+    title: 'Instituții — Unde Merg?',
+    description: 'Lista instituțiilor publice către care Unde Merg? te poate direcționa.',
+  },
 };
 
 // Institution data is fetched live from the DB on every request rather than

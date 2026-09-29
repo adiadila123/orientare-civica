@@ -4,6 +4,11 @@ import { FaqAccordion } from '@/components/FaqAccordion';
 export const metadata: Metadata = {
   title: 'Întrebări frecvente — Unde Merg?',
   description: 'Răspunsuri la cele mai frecvente întrebări despre Unde Merg?.',
+  alternates: { canonical: '/intrebari-frecvente' },
+  openGraph: {
+    title: 'Întrebări frecvente — Unde Merg?',
+    description: 'Răspunsuri la cele mai frecvente întrebări despre Unde Merg?.',
+  },
 };
 
 const FAQ_ITEMS = [

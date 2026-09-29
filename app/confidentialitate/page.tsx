@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Politica de confidențialitate — Unde Merg?',
   description: 'Cum sunt colectate, folosite și protejate datele tale pe Unde Merg? – Orientare Civică.',
+  alternates: { canonical: '/confidentialitate' },
 };
 
 export default function ConfidentialitatePage() {
