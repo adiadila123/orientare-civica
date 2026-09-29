@@ -4,6 +4,7 @@ const FOOTER_LINKS = [
   { href: '/', label: 'Acasă' },
   { href: '/institutii', label: 'Instituții' },
   { href: '/harta', label: 'Hartă' },
+  { href: '/dosarele-mele', label: 'Dosarele mele' },
   { href: '/intrebari-frecvente', label: 'Întrebări frecvente' },
 ];
 

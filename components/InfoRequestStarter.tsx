@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { rememberRecord } from '@/lib/myRecordsStorage';
 
 interface InfoRequestStarterProps {
   institutionCode: string;
+  institutionName: string;
 }
 
-export function InfoRequestStarter({ institutionCode }: InfoRequestStarterProps) {
+export function InfoRequestStarter({ institutionCode, institutionName }: InfoRequestStarterProps) {
   const router = useRouter();
   const [informationRequested, setInformationRequested] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,6 +32,13 @@ export function InfoRequestStarter({ institutionCode }: InfoRequestStarterProps)
         throw new Error('create-failed');
       }
       const created = await response.json();
+      rememberRecord({
+        id: created.id,
+        type: 'info-request',
+        number: created.request_number,
+        institutionName,
+        createdAt: created.created_at ?? new Date().toISOString(),
+      });
       router.push(`/solicitare-informatii/${created.id}`);
     } catch {
       setError('Nu am putut genera cererea. Încearcă din nou.');

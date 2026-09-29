@@ -13,6 +13,7 @@ describe('Footer', () => {
     render(<Footer />);
     expect(screen.getByRole('link', { name: 'Acasă' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Instituții' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Dosarele mele' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Întrebări frecvente' })).toBeInTheDocument();
   });
 

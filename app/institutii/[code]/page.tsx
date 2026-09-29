@@ -233,7 +233,7 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
         </p>
       </div>
 
-      <InfoRequestStarter institutionCode={institution.code} />
+      <InfoRequestStarter institutionCode={institution.code} institutionName={institution.name} />
     </div>
   );
 }

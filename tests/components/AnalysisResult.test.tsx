@@ -2,10 +2,15 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AnalysisResult } from '@/components/AnalysisResult';
+import { rememberRecord } from '@/lib/myRecordsStorage';
 import type { TriageResponse } from '@/lib/types';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
+}));
+
+vi.mock('@/lib/myRecordsStorage', () => ({
+  rememberRecord: vi.fn(),
 }));
 
 const baseResult: TriageResponse = {
@@ -109,6 +114,28 @@ describe('AnalysisResult', () => {
         }),
       })
     );
+
+    global.fetch = originalFetch;
+  });
+
+  it('remembers the newly created case locally so it appears on "Dosarele mele"', async () => {
+    const originalFetch = global.fetch;
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: '1', case_number: 'GD-2026-0001', created_at: '2026-09-28T10:00:00.000Z' }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<AnalysisResult result={contestableResult} description="Am primit o amendă nedreaptă." />);
+    await userEvent.click(screen.getByRole('button', { name: 'Generează contestația' }));
+
+    expect(rememberRecord).toHaveBeenCalledWith({
+      id: '1',
+      type: 'case',
+      number: 'GD-2026-0001',
+      institutionName: contestableResult.institution!.name,
+      createdAt: '2026-09-28T10:00:00.000Z',
+    });
 
     global.fetch = originalFetch;
   });

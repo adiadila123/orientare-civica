@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { InstitutionCard } from '@/components/InstitutionCard';
 import { StepNumber } from '@/components/StepNumber';
+import { rememberRecord } from '@/lib/myRecordsStorage';
 import type { TriageResponse } from '@/lib/types';
 
 type FeedbackState = 'idle' | 'correcting' | 'submitting' | 'submitted';
@@ -85,6 +86,13 @@ export function AnalysisResult({ result, description }: AnalysisResultProps) {
         throw new Error('create-failed');
       }
       const created = await response.json();
+      rememberRecord({
+        id: created.id,
+        type: 'case',
+        number: created.case_number,
+        institutionName: result.institution.name,
+        createdAt: created.created_at ?? new Date().toISOString(),
+      });
       router.push(`/dosare/${created.id}`);
     } catch {
       setCaseError('Nu am putut genera contestația. Încearcă din nou.');
