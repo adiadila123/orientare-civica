@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    env:
+      # None of the dynamic routes touch the DB at build time (they're all
+      # `force-dynamic`, fetched per-request), but this keeps a future
+      # accidental build-time DB call from failing CI with a confusing error.
+      DATABASE_URL: postgres://ci:ci@localhost:5432/ci
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        # --legacy-peer-deps: a pre-existing vitest@5 / @types/node@^20 peer
+        # conflict in this project, unrelated to any code change here.
+        run: npm ci --legacy-peer-deps
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
