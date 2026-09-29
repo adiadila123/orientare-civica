@@ -10,12 +10,18 @@ import type { Case, Institution } from '@/lib/types';
 interface CaseViewProps {
   initialCase: Case;
   institution: Institution;
+  initialSiblingCases?: Case[];
 }
 
-export function CaseView({ initialCase, institution }: CaseViewProps) {
+export function CaseView({ initialCase, institution, initialSiblingCases = [] }: CaseViewProps) {
   const [caseRecord, setCaseRecord] = useState(initialCase);
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [siblingCases, setSiblingCases] = useState(initialSiblingCases);
+  const [isLinking, setIsLinking] = useState(false);
+  const [linkCaseNumber, setLinkCaseNumber] = useState('');
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [isSubmittingLink, setIsSubmittingLink] = useState(false);
 
   useEffect(() => {
     if (!showSuccess) {
@@ -48,6 +54,35 @@ export function CaseView({ initialCase, institution }: CaseViewProps) {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  }
+
+  async function handleLinkCase() {
+    const trimmed = linkCaseNumber.trim();
+    if (trimmed.length === 0) {
+      return;
+    }
+    setIsSubmittingLink(true);
+    setLinkError(null);
+    try {
+      const response = await fetch(`/api/cases/${caseRecord.id}/link`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ caseNumber: trimmed }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        setLinkError(data?.error ?? 'Nu am putut lega dosarele.');
+        return;
+      }
+      const group = (data?.group ?? []) as Case[];
+      setSiblingCases(group.filter((c) => c.id !== caseRecord.id));
+      setLinkCaseNumber('');
+      setIsLinking(false);
+    } catch {
+      setLinkError('Nu am putut lega dosarele.');
+    } finally {
+      setIsSubmittingLink(false);
+    }
   }
 
   const canRemindDeadline = Boolean(institution.associated_court && caseRecord.pv_issue_date);
@@ -94,6 +129,64 @@ export function CaseView({ initialCase, institution }: CaseViewProps) {
 
       <div className="print:hidden">
         <CaseStatusTracker caseId={caseRecord.id} />
+      </div>
+
+      <div className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm print:hidden">
+        <h2 className="font-title-md text-title-md text-on-surface">Dosare legate</h2>
+        {siblingCases.length > 0 ? (
+          <ul className="flex flex-col gap-space-xs">
+            {siblingCases.map((sibling) => (
+              <li key={sibling.id}>
+                <a href={`/dosare/${sibling.id}`} className="text-secondary underline underline-offset-2">
+                  {sibling.case_number}
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="font-body-sm text-body-sm text-on-surface-variant">
+            Acest dosar nu este încă legat de altele.
+          </p>
+        )}
+
+        {isLinking ? (
+          <div className="flex flex-col gap-space-xs">
+            <label htmlFor="link-case-number" className="font-label-sm text-label-sm text-on-surface-variant">
+              Numărul dosarului cu care vrei să legi acesta (ex: o altă amendă din același episod)
+            </label>
+            <div className="flex gap-space-sm flex-wrap">
+              <input
+                id="link-case-number"
+                type="text"
+                value={linkCaseNumber}
+                onChange={(event) => setLinkCaseNumber(event.target.value)}
+                placeholder="GD-2026-0002"
+                className="rounded-lg border border-outline-variant px-space-sm py-2 font-body-sm text-body-sm flex-1 min-w-40"
+              />
+              <button
+                type="button"
+                onClick={handleLinkCase}
+                disabled={isSubmittingLink || linkCaseNumber.trim().length === 0}
+                className="rounded-lg bg-primary text-on-primary px-space-md py-2 font-label-lg text-label-lg disabled:opacity-50"
+              >
+                {isSubmittingLink ? 'Se leagă...' : 'Leagă dosarul'}
+              </button>
+            </div>
+            {linkError && (
+              <p role="alert" className="font-label-sm text-label-sm text-error">
+                {linkError}
+              </p>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsLinking(true)}
+            className="rounded-lg border border-outline-variant px-space-md py-2 font-label-lg text-label-lg text-on-surface self-start"
+          >
+            Leagă un alt dosar
+          </button>
+        )}
       </div>
 
       <LegalDocumentPreview caseRecord={caseRecord} institution={institution} />

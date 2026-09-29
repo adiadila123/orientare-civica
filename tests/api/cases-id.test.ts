@@ -70,6 +70,7 @@ describe('PUT /api/cases/[id]', () => {
     vi.mocked(updateCase).mockResolvedValue({
       id: '1',
       case_number: 'GD-2026-0001',
+      case_group_id: 'group-1',
       user_description: 'x',
       ai_analysis: null,
       recommended_institution_id: null,

@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { NeonQueryFunction } from '@neondatabase/serverless';
-import { createCase, findCase, updateCase } from '@/lib/cases';
+import {
+  createCase,
+  findCase,
+  updateCase,
+  findCaseByCaseNumber,
+  mergeCaseGroups,
+  findCasesByGroupId,
+} from '@/lib/cases';
 import type { Case } from '@/lib/types';
 
 function createFakeSql(rows: unknown[]) {
@@ -11,6 +18,7 @@ function createFakeSql(rows: unknown[]) {
 const sampleCase: Case = {
   id: '1',
   case_number: 'GD-2026-0001',
+  case_group_id: 'group-1',
   user_description: 'Am primit o amendă.',
   ai_analysis: null,
   recommended_institution_id: null,
@@ -155,5 +163,48 @@ describe('updateCase', () => {
       annexes: [],
     });
     expect(result).toBeNull();
+  });
+});
+
+describe('findCaseByCaseNumber', () => {
+  it('returns the matched case', async () => {
+    const rawRow = {
+      ...sampleCase,
+      created_at: new Date('2026-09-28T10:00:00.000Z'),
+      updated_at: new Date('2026-09-28T10:00:00.000Z'),
+    };
+    const sql = createFakeSql([rawRow]);
+    expect(await findCaseByCaseNumber(sql, 'GD-2026-0001')).toEqual(sampleCase);
+  });
+
+  it('returns null when no case has that number', async () => {
+    const sql = createFakeSql([]);
+    expect(await findCaseByCaseNumber(sql, 'missing')).toBeNull();
+  });
+});
+
+describe('mergeCaseGroups', () => {
+  it('repoints every case in the merged-from group to the kept group', async () => {
+    const sql = createFakeSql([]);
+    await mergeCaseGroups(sql, 'group-a', 'group-b');
+    expect(sql).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('findCasesByGroupId', () => {
+  it('returns every case sharing the group id, oldest first', async () => {
+    const rawRows = [
+      { ...sampleCase, id: '1', created_at: new Date('2026-09-28T10:00:00.000Z'), updated_at: new Date('2026-09-28T10:00:00.000Z') },
+      { ...sampleCase, id: '2', case_number: 'GD-2026-0002', created_at: new Date('2026-09-28T11:00:00.000Z'), updated_at: new Date('2026-09-28T11:00:00.000Z') },
+    ];
+    const sql = createFakeSql(rawRows);
+    const result = await findCasesByGroupId(sql, 'group-1');
+    expect(result.map((c) => c.id)).toEqual(['1', '2']);
+  });
+
+  it('drops any row that fails schema validation instead of throwing', async () => {
+    const sql = createFakeSql([{ ...sampleCase, revision: 'not-a-number' }]);
+    const result = await findCasesByGroupId(sql, 'group-1');
+    expect(result).toEqual([]);
   });
 });

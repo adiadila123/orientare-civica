@@ -39,6 +39,7 @@ describe('POST /api/cases', () => {
     vi.mocked(createCase).mockResolvedValue({
       id: '1',
       case_number: 'GD-2026-0001',
+      case_group_id: 'group-1',
       user_description: 'Am primit o amendă.',
       ai_analysis: null,
       recommended_institution_id: null,
@@ -74,6 +75,7 @@ describe('POST /api/cases', () => {
     vi.mocked(createCase).mockResolvedValue({
       id: '1',
       case_number: 'GD-2026-0001',
+      case_group_id: 'group-1',
       user_description: 'Am primit o amendă.',
       ai_analysis: null,
       recommended_institution_id: null,

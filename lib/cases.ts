@@ -34,6 +34,42 @@ export async function findCase(
   return parsed.success ? parsed.data : null;
 }
 
+export async function findCaseByCaseNumber(
+  sql: NeonQueryFunction<false, false>,
+  caseNumber: string
+): Promise<Case | null> {
+  const rows = await sql`SELECT * FROM cases WHERE case_number = ${caseNumber} LIMIT 1`;
+  const row = rows[0];
+  if (!row) {
+    return null;
+  }
+  const parsed = CaseSchema.safeParse(row);
+  return parsed.success ? parsed.data : null;
+}
+
+// Merges two case groups by repointing every case that currently belongs to
+// mergeFromGroupId onto keepGroupId — not just a single row — so linking two
+// cases that each already have group-mates bundles everyone together instead
+// of orphaning them.
+export async function mergeCaseGroups(
+  sql: NeonQueryFunction<false, false>,
+  keepGroupId: string,
+  mergeFromGroupId: string
+): Promise<void> {
+  await sql`UPDATE cases SET case_group_id = ${keepGroupId} WHERE case_group_id = ${mergeFromGroupId}`;
+}
+
+export async function findCasesByGroupId(
+  sql: NeonQueryFunction<false, false>,
+  groupId: string
+): Promise<Case[]> {
+  const rows = await sql`SELECT * FROM cases WHERE case_group_id = ${groupId} ORDER BY created_at ASC`;
+  return rows
+    .map((row) => CaseSchema.safeParse(row))
+    .filter((parsed): parsed is { success: true; data: Case } => parsed.success)
+    .map((parsed) => parsed.data);
+}
+
 export interface UpdateCaseInput {
   petitionerName: string;
   petitionerCnp: string;

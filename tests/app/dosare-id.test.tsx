@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -8,6 +8,7 @@ vi.mock('@/lib/db', () => ({
 
 vi.mock('@/lib/cases', () => ({
   findCase: vi.fn(),
+  findCasesByGroupId: vi.fn(),
 }));
 
 vi.mock('@/lib/institutions', () => ({
@@ -21,13 +22,14 @@ vi.mock('next/navigation', () => ({
 }));
 
 import CasePage from '@/app/dosare/[id]/page';
-import { findCase } from '@/lib/cases';
+import { findCase, findCasesByGroupId } from '@/lib/cases';
 import { findInstitution } from '@/lib/institutions';
 import type { Case, Institution } from '@/lib/types';
 
 const caseRecord: Case = {
   id: '1',
   case_number: 'GD-2026-0001',
+  case_group_id: 'group-1',
   user_description: 'Am primit o amendă.',
   ai_analysis: null,
   recommended_institution_id: null,
@@ -71,6 +73,10 @@ const institution: Institution = {
 };
 
 describe('CasePage', () => {
+  beforeEach(() => {
+    vi.mocked(findCasesByGroupId).mockResolvedValue([caseRecord]);
+  });
+
   it('renders the case number and document preview', async () => {
     vi.mocked(findCase).mockResolvedValue(caseRecord);
     vi.mocked(findInstitution).mockResolvedValue(institution);
@@ -116,5 +122,17 @@ describe('CasePage', () => {
 
     expect(await screen.findByRole('status')).toHaveTextContent('Datele au fost salvate cu succes.');
     expect(screen.getByText(/Ion Popescu/)).toBeInTheDocument();
+  });
+
+  it('passes sibling cases from the same group, excluding the current case itself', async () => {
+    vi.mocked(findCase).mockResolvedValue(caseRecord);
+    vi.mocked(findInstitution).mockResolvedValue(institution);
+    const sibling = { ...caseRecord, id: '2', case_number: 'GD-2026-0002' };
+    vi.mocked(findCasesByGroupId).mockResolvedValue([caseRecord, sibling]);
+
+    render(await CasePage({ params: Promise.resolve({ id: '1' }), searchParams: Promise.resolve({}) }));
+
+    expect(screen.getByRole('link', { name: /GD-2026-0002/ })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^GD-2026-0001$/ })).not.toBeInTheDocument();
   });
 });

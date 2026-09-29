@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createDb } from '@/lib/db';
-import { findCase } from '@/lib/cases';
+import { findCase, findCasesByGroupId } from '@/lib/cases';
 import { findInstitution } from '@/lib/institutions';
 import { CaseView } from '@/components/CaseView';
 
@@ -28,5 +28,9 @@ export default async function CasePage(props: PageProps<'/dosare/[id]'>) {
     notFound();
   }
 
-  return <CaseView initialCase={caseRecord} institution={institution} />;
+  const siblingCases = caseRecord.case_group_id
+    ? (await findCasesByGroupId(sql, caseRecord.case_group_id)).filter((c) => c.id !== caseRecord.id)
+    : [];
+
+  return <CaseView initialCase={caseRecord} institution={institution} initialSiblingCases={siblingCases} />;
 }

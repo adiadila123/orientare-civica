@@ -53,6 +53,7 @@ const dateOnlyAsIsoDate = z.preprocess((val) => {
 export const CaseSchema = z.object({
   id: z.string(),
   case_number: z.string(),
+  case_group_id: z.string().optional(),
   user_description: z.string(),
   ai_analysis: z.unknown().nullable(),
   recommended_institution_id: z.string().nullable(),
