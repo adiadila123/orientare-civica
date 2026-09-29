@@ -182,6 +182,15 @@ describe('InstitutionGuidePage', () => {
     expect(screen.getByText('Sesizări și amenzi la nivel local; site-ul variază în funcție de localitate.')).toBeInTheDocument();
     expect(screen.queryByText('Depunerea online nu este disponibilă pentru această instituție.')).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Date de contact' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Găsește cea mai apropiată primărie' })).toBeInTheDocument();
+  });
+
+  it('does not show the nearest-townhall finder for institutions other than PRIMARIE', async () => {
+    vi.mocked(findInstitution).mockResolvedValue(anaf);
+
+    render(await InstitutionGuidePage({ params: Promise.resolve({ code: 'anaf' }), searchParams: Promise.resolve({}) }));
+
+    expect(screen.queryByRole('heading', { name: 'Găsește cea mai apropiată primărie' })).not.toBeInTheDocument();
   });
 
   it('shows real contact details for CNCD without inventing a contravention deadline', async () => {

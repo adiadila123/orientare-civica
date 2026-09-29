@@ -4,6 +4,7 @@ import { createDb } from '@/lib/db';
 import { findInstitution } from '@/lib/institutions';
 import { StepNumber } from '@/components/StepNumber';
 import { InfoRequestStarter } from '@/components/InfoRequestStarter';
+import { NearestTownhallFinder } from '@/components/NearestTownhallFinder';
 
 const STAMP_DUTY_AMOUNT = '20,00 LEI';
 const LEGAL_DEADLINE_DAYS = 15;
@@ -172,6 +173,8 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
           </p>
         </div>
       )}
+
+      {institution.code === 'PRIMARIE' && <NearestTownhallFinder />}
 
       <div className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
         <h2 className="font-title-md text-title-md text-on-surface mb-space-xs">Pașii de urmat</h2>
