@@ -44,7 +44,8 @@ export function ProblemInput({ onSubmit, isLoading = false }: ProblemInputProps)
         aria-invalid={isTooShort ? true : undefined}
         aria-describedby={isTooShort ? 'description-error' : undefined}
         maxLength={MAX_DESCRIPTION_LENGTH}
-        rows={5}
+        rows={10}
+        className="min-h-40"
       />
       {isTooShort && (
         <p id="description-error" role="alert" className="font-label-sm text-label-sm text-error">
