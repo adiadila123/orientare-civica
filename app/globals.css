@@ -157,3 +157,13 @@
     @apply font-sans;
   }
 }
+
+.institution-marker-dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background-color: var(--color-primary);
+  border: 2px solid var(--color-surface-container-lowest);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+}
