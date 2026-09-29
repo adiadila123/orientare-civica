@@ -69,14 +69,47 @@ describe('InstitutionCatalog', () => {
     expect(screen.getByText('Nicio instituție nu corespunde căutării tale.')).toBeInTheDocument();
   });
 
-  it('filters by category pill', async () => {
+  it('filters by category via the dropdown', async () => {
     const user = userEvent.setup();
     render(<InstitutionCatalog institutions={[anaf, anpc]} />);
 
-    await user.click(screen.getByRole('button', { name: 'Fiscal' }));
+    await user.selectOptions(screen.getByLabelText('Categorie'), 'Fiscal');
 
     expect(screen.getByText(anaf.name)).toBeInTheDocument();
     expect(screen.queryByText(anpc.name)).not.toBeInTheDocument();
+  });
+
+  it('lists every category present in the data, including newly added ones, sorted alphabetically', () => {
+    const cazier: Institution = {
+      id: '4',
+      code: 'CAZIER_JUDICIAR',
+      name: 'Cazierul Judiciar (Poliția Română)',
+      description: null,
+      category: 'ordine_publica',
+      website_url: 'https://hub.mai.gov.ro',
+      contact_form_url: null,
+      phone: null,
+      email: null,
+      address: null,
+    };
+    const dgpci: Institution = {
+      id: '5',
+      code: 'DGPCI',
+      name: 'Direcția Generală Permise de Conducere și Înmatriculări (DGPCI)',
+      description: null,
+      category: 'circulatie_rutiera',
+      website_url: 'https://dgpci.mai.gov.ro',
+      contact_form_url: null,
+      phone: null,
+      email: null,
+      address: null,
+    };
+    render(<InstitutionCatalog institutions={[anaf, anpc, cazier, dgpci]} />);
+
+    const select = screen.getByLabelText('Categorie') as HTMLSelectElement;
+    const optionLabels = Array.from(select.options).map((option) => option.textContent);
+
+    expect(optionLabels).toEqual(['Toate', 'Circulație rutieră', 'Fiscal', 'Ordine publică', 'Protecția consumatorilor']);
   });
 
   it('shows the M1 fallback message when no institutions are provided at all', () => {

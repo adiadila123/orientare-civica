@@ -58,7 +58,9 @@ export function InstitutionCatalog({ institutions }: InstitutionCatalogProps) {
         seen.add(institution.category);
       }
     }
-    return Array.from(seen);
+    return Array.from(seen).sort((a, b) =>
+      (CATEGORY_LABELS[a] ?? a).localeCompare(CATEGORY_LABELS[b] ?? b, 'ro')
+    );
   }, [institutions]);
 
   if (institutions.length === 0) {
@@ -90,26 +92,23 @@ export function InstitutionCatalog({ institutions }: InstitutionCatalogProps) {
           className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-space-sm py-2 font-body-sm text-body-sm text-on-surface focus-visible:outline-2 focus-visible:outline-secondary"
         />
         <LocationSelector onChange={setLocation} />
-        <div className="flex flex-wrap gap-space-sm" role="group" aria-label="Filtrează după categorie">
-          <button
-            type="button"
-            onClick={() => setActiveCategory(ALL_CATEGORY)}
-            aria-pressed={activeCategory === ALL_CATEGORY}
-            className="rounded-full px-space-sm py-1 font-label-md text-label-md aria-pressed:bg-secondary aria-pressed:text-on-secondary bg-surface-container-low text-on-surface-variant"
+        <div className="flex flex-col gap-1 sm:w-64">
+          <label htmlFor="category-filter" className="font-label-sm text-label-sm text-on-surface-variant">
+            Categorie
+          </label>
+          <select
+            id="category-filter"
+            value={activeCategory}
+            onChange={(event) => setActiveCategory(event.target.value)}
+            className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-space-sm py-2 font-body-sm text-body-sm text-on-surface focus-visible:outline-2 focus-visible:outline-secondary"
           >
-            Toate
-          </button>
-          {categories.map((category) => (
-            <button
-              key={category}
-              type="button"
-              onClick={() => setActiveCategory(category)}
-              aria-pressed={activeCategory === category}
-              className="rounded-full px-space-sm py-1 font-label-md text-label-md aria-pressed:bg-secondary aria-pressed:text-on-secondary bg-surface-container-low text-on-surface-variant"
-            >
-              {CATEGORY_LABELS[category] ?? category}
-            </button>
-          ))}
+            <option value={ALL_CATEGORY}>Toate</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {CATEGORY_LABELS[category] ?? category}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
