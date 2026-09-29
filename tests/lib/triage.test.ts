@@ -33,6 +33,8 @@ describe('TRIAGE_SYSTEM_PROMPT', () => {
       'ITM',
       'CNCD',
       'AVOCATUL_POPORULUI',
+      'CAZIER_JUDICIAR',
+      'DGPCI',
     ]) {
       expect(TRIAGE_SYSTEM_PROMPT).toContain(code);
     }

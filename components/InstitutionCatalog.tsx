@@ -30,6 +30,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   munca: 'Muncă',
   discriminare: 'Discriminare',
   ombudsman: 'Ombudsman',
+  circulatie_rutiera: 'Circulație rutieră',
 };
 
 const ALL_CATEGORY = 'toate';

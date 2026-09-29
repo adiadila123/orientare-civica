@@ -231,4 +231,56 @@ describe('InstitutionGuidePage', () => {
       'https://fara-hartie.gov.ro'
     );
   });
+
+  it('shows the free online path for cazier judiciar via its contact form URL', async () => {
+    vi.mocked(findInstitution).mockResolvedValue({
+      id: '6',
+      code: 'CAZIER_JUDICIAR',
+      name: 'Cazierul Judiciar (Poliția Română)',
+      description:
+        'Certificatul de cazier judiciar se obține gratuit, integral online și semnat electronic (valabil 6 luni), prin hub.mai.gov.ro.',
+      category: 'ordine_publica',
+      website_url: 'https://hub.mai.gov.ro',
+      contact_form_url: 'https://hub.mai.gov.ro/serviciu/view?id=88',
+      phone: null,
+      email: null,
+      address: null,
+      associated_court: null,
+      iban: null,
+      cod_venit: null,
+      cui: null,
+      wait_time_minutes: null,
+    });
+
+    render(await InstitutionGuidePage({ params: Promise.resolve({ code: 'cazier_judiciar' }), searchParams: Promise.resolve({}) }));
+
+    expect(screen.getByText(/gratuit, integral online/)).toBeInTheDocument();
+    expect(screen.getByText('Depune cererea prin formularul online al instituției.')).toBeInTheDocument();
+  });
+
+  it('shows DGPCI as having no single national address, with an online path via its website', async () => {
+    vi.mocked(findInstitution).mockResolvedValue({
+      id: '7',
+      code: 'DGPCI',
+      name: 'Direcția Generală Permise de Conducere și Înmatriculări (DGPCI)',
+      description:
+        'Preschimbarea permisului de conducere și înmatricularea vehiculelor se fac la Serviciul Public Comunitar (SPCRPCIV) din județul tău — nu există un sediu unic național.',
+      category: 'circulatie_rutiera',
+      website_url: 'https://dgpci.mai.gov.ro',
+      contact_form_url: null,
+      phone: null,
+      email: null,
+      address: null,
+      associated_court: null,
+      iban: null,
+      cod_venit: null,
+      cui: null,
+      wait_time_minutes: null,
+    });
+
+    render(await InstitutionGuidePage({ params: Promise.resolve({ code: 'dgpci' }), searchParams: Promise.resolve({}) }));
+
+    expect(screen.getByText(/nu există un sediu unic național/)).toBeInTheDocument();
+    expect(screen.getByText('Verifică site-ul instituției pentru depunere online.')).toBeInTheDocument();
+  });
 });
