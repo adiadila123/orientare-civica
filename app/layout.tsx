@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { SITE_URL } from "@/lib/site";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${plusJakartaSans.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <ServiceWorkerRegistration />
         <Header />
         <main className="pt-20 print:pt-0">{children}</main>
         <Footer />

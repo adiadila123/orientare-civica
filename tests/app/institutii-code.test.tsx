@@ -208,4 +208,15 @@ describe('InstitutionGuidePage', () => {
     expect(screen.getByText(/Completează o sesizare sau cerere/)).toBeInTheDocument();
     expect(screen.getByText('Orice document care susține sesizarea (facturi, corespondență, fotografii etc.)')).toBeInTheDocument();
   });
+
+  it('links to the official "Fără hârtie" platform for reporting excessive bureaucracy', async () => {
+    vi.mocked(findInstitution).mockResolvedValue(anaf);
+
+    render(await InstitutionGuidePage({ params: Promise.resolve({ code: 'anaf' }), searchParams: Promise.resolve({}) }));
+
+    expect(screen.getByRole('link', { name: 'Fără hârtie' })).toHaveAttribute(
+      'href',
+      'https://fara-hartie.gov.ro'
+    );
+  });
 });

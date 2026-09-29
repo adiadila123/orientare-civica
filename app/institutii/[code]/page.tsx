@@ -193,6 +193,25 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
         </div>
       )}
 
+      <div className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+        <h2 className="font-title-md text-title-md text-on-surface mb-space-xs">
+          Ai întâmpinat birocrație excesivă?
+        </h2>
+        <p className="font-body-sm text-body-sm text-on-surface-variant">
+          Dacă {institution.name} îți cere documente redundante sau proceduri inutil de greoaie, poți
+          raporta direct Guvernului prin platforma{' '}
+          <a
+            href="https://fara-hartie.gov.ro"
+            target="_blank"
+            rel="noreferrer"
+            className="text-secondary underline underline-offset-2"
+          >
+            Fără hârtie
+          </a>
+          .
+        </p>
+      </div>
+
       <InfoRequestStarter institutionCode={institution.code} />
     </div>
   );

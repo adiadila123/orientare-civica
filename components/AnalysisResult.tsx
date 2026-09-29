@@ -3,9 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { InstitutionCard } from '@/components/InstitutionCard';
 import { StepNumber } from '@/components/StepNumber';
 import type { TriageResponse } from '@/lib/types';
+
+type FeedbackState = 'idle' | 'correcting' | 'submitting' | 'submitted';
 
 const URGENCY_LABELS: Record<TriageResponse['urgency'], string> = {
   low: 'Prioritate scăzută',
@@ -30,8 +33,36 @@ export function AnalysisResult({ result, description }: AnalysisResultProps) {
   const router = useRouter();
   const [isCreatingCase, setIsCreatingCase] = useState(false);
   const [caseError, setCaseError] = useState<string | null>(null);
+  const [feedbackState, setFeedbackState] = useState<FeedbackState>('idle');
+  const [correction, setCorrection] = useState('');
 
   const isContestable = Boolean(result.institution && result.institution.associated_court);
+
+  async function submitFeedback(isHelpful: boolean, correctionText: string | null) {
+    setFeedbackState('submitting');
+    try {
+      await fetch('/api/triage-feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          description,
+          aiAnalysis: result,
+          suggestedInstitutionCode: result.institution?.code ?? null,
+          isHelpful,
+          correction: correctionText,
+        }),
+      });
+    } catch {
+      // Feedback is a best-effort signal, not a critical path — a failed
+      // request shouldn't block or alarm the user.
+    } finally {
+      setFeedbackState('submitted');
+    }
+  }
+
+  function handleSubmitCorrection() {
+    void submitFeedback(false, correction.trim().length > 0 ? correction.trim() : null);
+  }
 
   async function handleGenerateContestation() {
     if (!result.institution) {
@@ -132,6 +163,54 @@ export function AnalysisResult({ result, description }: AnalysisResultProps) {
           )}
         </div>
       )}
+
+      <div className="flex flex-col gap-space-xs border-t border-outline-variant pt-space-sm print:hidden">
+        {feedbackState === 'submitted' ? (
+          <p className="font-body-sm text-body-sm text-on-surface-variant">Mulțumim pentru feedback!</p>
+        ) : (
+          <>
+            <p className="font-label-md text-label-md text-on-surface-variant">A fost utilă recomandarea?</p>
+            <div className="flex gap-space-sm">
+              <button
+                type="button"
+                onClick={() => void submitFeedback(true, null)}
+                disabled={feedbackState === 'submitting'}
+                aria-label="Recomandarea a fost utilă"
+                className="rounded-lg bg-surface-container-high px-space-sm py-1.5 text-label-lg disabled:opacity-50"
+              >
+                <span aria-hidden="true">👍</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFeedbackState('correcting')}
+                disabled={feedbackState === 'submitting'}
+                aria-label="Recomandarea nu a fost utilă"
+                className="rounded-lg bg-surface-container-high px-space-sm py-1.5 text-label-lg disabled:opacity-50"
+              >
+                <span aria-hidden="true">👎</span>
+              </button>
+            </div>
+            {feedbackState === 'correcting' && (
+              <div className="flex flex-col gap-space-xs">
+                <Textarea
+                  value={correction}
+                  onChange={(event) => setCorrection(event.target.value)}
+                  placeholder="Ce instituție ar fi fost corectă? (opțional)"
+                  aria-label="Ce instituție ar fi fost corectă?"
+                  rows={2}
+                />
+                <button
+                  type="button"
+                  onClick={handleSubmitCorrection}
+                  className="rounded-lg border border-outline-variant px-space-md py-2 font-label-lg text-label-lg text-on-surface self-start disabled:opacity-50"
+                >
+                  Trimite feedback
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

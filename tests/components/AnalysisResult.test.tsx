@@ -112,4 +112,58 @@ describe('AnalysisResult', () => {
 
     global.fetch = originalFetch;
   });
+
+  it('sends positive feedback immediately when the thumbs-up button is clicked', async () => {
+    const originalFetch = global.fetch;
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ id: '1' }) });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<AnalysisResult result={baseResult} description="Am primit o amendă." />);
+    await userEvent.click(screen.getByRole('button', { name: 'Recomandarea a fost utilă' }));
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/triage-feedback',
+      expect.objectContaining({
+        body: JSON.stringify({
+          description: 'Am primit o amendă.',
+          aiAnalysis: baseResult,
+          suggestedInstitutionCode: 'ANAF',
+          isHelpful: true,
+          correction: null,
+        }),
+      })
+    );
+    expect(await screen.findByText('Mulțumim pentru feedback!')).toBeInTheDocument();
+
+    global.fetch = originalFetch;
+  });
+
+  it('reveals an optional correction field after thumbs-down, then submits it', async () => {
+    const originalFetch = global.fetch;
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ id: '1' }) });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<AnalysisResult result={baseResult} description="Am primit o amendă." />);
+    await userEvent.click(screen.getByRole('button', { name: 'Recomandarea nu a fost utilă' }));
+
+    const correctionField = screen.getByLabelText('Ce instituție ar fi fost corectă?');
+    await userEvent.type(correctionField, 'Ar fi trebuit ANPC');
+    await userEvent.click(screen.getByRole('button', { name: 'Trimite feedback' }));
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/triage-feedback',
+      expect.objectContaining({
+        body: JSON.stringify({
+          description: 'Am primit o amendă.',
+          aiAnalysis: baseResult,
+          suggestedInstitutionCode: 'ANAF',
+          isHelpful: false,
+          correction: 'Ar fi trebuit ANPC',
+        }),
+      })
+    );
+    expect(await screen.findByText('Mulțumim pentru feedback!')).toBeInTheDocument();
+
+    global.fetch = originalFetch;
+  });
 });

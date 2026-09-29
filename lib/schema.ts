@@ -77,6 +77,16 @@ export const CaseSchema = z.object({
   updated_at: dateAsIsoString,
 });
 
+export const TriageFeedbackSchema = z.object({
+  id: z.string(),
+  user_description: z.string(),
+  ai_analysis: z.unknown(),
+  suggested_institution_code: z.string().nullable(),
+  is_helpful: z.boolean(),
+  correction: z.string().nullable(),
+  created_at: dateAsIsoString,
+});
+
 export const InfoRequestSchema = z.object({
   id: z.string(),
   request_number: z.string(),
