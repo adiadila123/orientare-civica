@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { InfoRequestDocumentPreview } from '@/components/InfoRequestDocumentPreview';
 import { EditInfoRequestForm } from '@/components/EditInfoRequestForm';
 import { CaseStatusTracker } from '@/components/CaseStatusTracker';
+import { rememberRecord } from '@/lib/myRecordsStorage';
 import type { InfoRequest, Institution } from '@/lib/types';
 
 interface InfoRequestViewProps {
@@ -23,6 +24,20 @@ export function InfoRequestView({ initialInfoRequest, institution }: InfoRequest
     const timeoutId = setTimeout(() => setShowSuccess(false), 4000);
     return () => clearTimeout(timeoutId);
   }, [showSuccess]);
+
+  // Backfills "Dosarele mele" for a request that predates that feature, or
+  // that was opened on a browser/session that never went through the
+  // creation flow.
+  useEffect(() => {
+    rememberRecord({
+      id: infoRequest.id,
+      type: 'info-request',
+      number: infoRequest.request_number,
+      institutionName: institution.name,
+      createdAt: infoRequest.created_at,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [infoRequest.id]);
 
   function handleSaved(updated: InfoRequest) {
     setInfoRequest(updated);

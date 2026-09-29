@@ -5,6 +5,7 @@ import { LegalDocumentPreview } from '@/components/LegalDocumentPreview';
 import { EditCaseForm } from '@/components/EditCaseForm';
 import { CaseStatusTracker } from '@/components/CaseStatusTracker';
 import { buildContestationDeadlineIcs } from '@/lib/ics';
+import { rememberRecord } from '@/lib/myRecordsStorage';
 import type { Case, Institution } from '@/lib/types';
 
 interface CaseViewProps {
@@ -30,6 +31,19 @@ export function CaseView({ initialCase, institution, initialSiblingCases = [] }:
     const timeoutId = setTimeout(() => setShowSuccess(false), 4000);
     return () => clearTimeout(timeoutId);
   }, [showSuccess]);
+
+  // Backfills "Dosarele mele" for a case that predates that feature, or that
+  // was opened on a browser/session that never went through the creation flow.
+  useEffect(() => {
+    rememberRecord({
+      id: caseRecord.id,
+      type: 'case',
+      number: caseRecord.case_number,
+      institutionName: institution.name,
+      createdAt: caseRecord.created_at,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRecord.id]);
 
   function handleSaved(updated: Case) {
     setCaseRecord(updated);

@@ -20,9 +20,14 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+vi.mock('@/lib/myRecordsStorage', () => ({
+  rememberRecord: vi.fn(),
+}));
+
 import InfoRequestPage from '@/app/solicitare-informatii/[id]/page';
 import { findInfoRequest } from '@/lib/infoRequests';
 import { findInstitution } from '@/lib/institutions';
+import { rememberRecord } from '@/lib/myRecordsStorage';
 import type { InfoRequest, Institution } from '@/lib/types';
 
 const infoRequest: InfoRequest = {
@@ -61,6 +66,21 @@ describe('InfoRequestPage', () => {
 
     expect(screen.getByText(/IP-2026-0001/)).toBeInTheDocument();
     expect(screen.getByText('CERERE DE ACCES LA INFORMAȚII DE INTERES PUBLIC')).toBeInTheDocument();
+  });
+
+  it('backfills "Dosarele mele" on mount, so a bookmarked/pre-existing request gets remembered', async () => {
+    vi.mocked(findInfoRequest).mockResolvedValue(infoRequest);
+    vi.mocked(findInstitution).mockResolvedValue(institution);
+
+    render(await InfoRequestPage({ params: Promise.resolve({ id: '1' }), searchParams: Promise.resolve({}) }));
+
+    expect(rememberRecord).toHaveBeenCalledWith({
+      id: infoRequest.id,
+      type: 'info-request',
+      number: infoRequest.request_number,
+      institutionName: institution.name,
+      createdAt: infoRequest.created_at,
+    });
   });
 
   it('calls notFound when the request does not exist', async () => {

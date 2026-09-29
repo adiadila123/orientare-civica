@@ -2,7 +2,12 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CaseView } from '@/components/CaseView';
+import { rememberRecord } from '@/lib/myRecordsStorage';
 import type { Case, Institution } from '@/lib/types';
+
+vi.mock('@/lib/myRecordsStorage', () => ({
+  rememberRecord: vi.fn(),
+}));
 
 const caseRecord: Case = {
   id: '1',
@@ -115,6 +120,17 @@ describe('CaseView', () => {
       <CaseView initialCase={caseRecord} institution={{ ...contestableInstitution, associated_court: null }} />
     );
     expect(screen.queryByRole('link', { name: 'Achită taxa (Ghișeul.ro)' })).not.toBeInTheDocument();
+  });
+
+  it('backfills "Dosarele mele" on mount, so a bookmarked/pre-existing case gets remembered', () => {
+    render(<CaseView initialCase={caseRecord} institution={contestableInstitution} />);
+    expect(rememberRecord).toHaveBeenCalledWith({
+      id: caseRecord.id,
+      type: 'case',
+      number: caseRecord.case_number,
+      institutionName: contestableInstitution.name,
+      createdAt: caseRecord.created_at,
+    });
   });
 
   it('shows a message when the case has no linked siblings yet', () => {
