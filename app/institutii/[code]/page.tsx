@@ -125,6 +125,27 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
             pentru a depune contestația, conform art. 31 din O.G. nr. 2/2001. Taxa judiciară de timbru este
             de {STAMP_DUTY_AMOUNT}, conform art. 19 din O.U.G. nr. 80/2013 privind taxele judiciare de timbru.
           </p>
+          <p className="font-body-sm text-body-sm text-on-surface-variant mt-space-xs">
+            Taxa de timbru se poate achita și online, prin{' '}
+            <a
+              href="https://www.ghiseul.ro"
+              target="_blank"
+              rel="noreferrer"
+              className="text-secondary underline underline-offset-2"
+            >
+              Ghișeul.ro
+            </a>
+            . Contestația poate fi depusă și electronic, prin{' '}
+            <a
+              href="https://registratura.rejust.ro"
+              target="_blank"
+              rel="noreferrer"
+              className="text-secondary underline underline-offset-2"
+            >
+              portalul instanțelor
+            </a>
+            .
+          </p>
         </div>
       )}
 

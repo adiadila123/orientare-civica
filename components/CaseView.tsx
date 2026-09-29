@@ -117,6 +117,26 @@ export function CaseView({ initialCase, institution, initialSiblingCases = [] }:
           >
             Descarcă PDF
           </button>
+          {institution.associated_court && (
+            <>
+              <a
+                href="https://www.ghiseul.ro"
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-lg border border-outline-variant px-space-md py-2 font-label-lg text-label-lg text-on-surface"
+              >
+                Achită taxa (Ghișeul.ro)
+              </a>
+              <a
+                href="https://registratura.rejust.ro"
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-lg border border-outline-variant px-space-md py-2 font-label-lg text-label-lg text-on-surface"
+              >
+                Depune electronic
+              </a>
+            </>
+          )}
           <button
             type="button"
             onClick={() => setIsEditing(true)}

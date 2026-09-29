@@ -209,6 +209,18 @@ describe('InstitutionGuidePage', () => {
     expect(screen.getByText('Orice document care susține sesizarea (facturi, corespondență, fotografii etc.)')).toBeInTheDocument();
   });
 
+  it('links to Ghișeul.ro and the court e-filing portal for a contestable case', async () => {
+    vi.mocked(findInstitution).mockResolvedValue({ ...anaf, associated_court: 'Judecătoria Sectorului 5' });
+
+    render(await InstitutionGuidePage({ params: Promise.resolve({ code: 'anaf' }), searchParams: Promise.resolve({}) }));
+
+    expect(screen.getByRole('link', { name: 'Ghișeul.ro' })).toHaveAttribute('href', 'https://www.ghiseul.ro');
+    expect(screen.getByRole('link', { name: 'portalul instanțelor' })).toHaveAttribute(
+      'href',
+      'https://registratura.rejust.ro'
+    );
+  });
+
   it('links to the official "Fără hârtie" platform for reporting excessive bureaucracy', async () => {
     vi.mocked(findInstitution).mockResolvedValue(anaf);
 

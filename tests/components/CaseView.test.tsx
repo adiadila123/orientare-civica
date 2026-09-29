@@ -98,6 +98,25 @@ describe('CaseView', () => {
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
   });
 
+  it('shows links to Ghișeul.ro and the court e-filing portal for a contestable case', () => {
+    render(<CaseView initialCase={caseRecord} institution={contestableInstitution} />);
+    expect(screen.getByRole('link', { name: 'Achită taxa (Ghișeul.ro)' })).toHaveAttribute(
+      'href',
+      'https://www.ghiseul.ro'
+    );
+    expect(screen.getByRole('link', { name: 'Depune electronic' })).toHaveAttribute(
+      'href',
+      'https://registratura.rejust.ro'
+    );
+  });
+
+  it('hides the Ghișeul.ro/e-filing links for a non-contestable institution', () => {
+    render(
+      <CaseView initialCase={caseRecord} institution={{ ...contestableInstitution, associated_court: null }} />
+    );
+    expect(screen.queryByRole('link', { name: 'Achită taxa (Ghișeul.ro)' })).not.toBeInTheDocument();
+  });
+
   it('shows a message when the case has no linked siblings yet', () => {
     render(<CaseView initialCase={caseRecord} institution={contestableInstitution} />);
     expect(screen.getByText('Acest dosar nu este încă legat de altele.')).toBeInTheDocument();
