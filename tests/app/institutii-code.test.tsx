@@ -299,6 +299,10 @@ describe('InstitutionGuidePage', () => {
 
     expect(screen.getByText(/gratuit, integral online/)).toBeInTheDocument();
     expect(screen.getByText('Depune cererea prin formularul online al instituției.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'https://hub.mai.gov.ro/serviciu/view?id=88' })).toHaveAttribute(
+      'href',
+      'https://hub.mai.gov.ro/serviciu/view?id=88'
+    );
   });
 
   it('shows DGPCI as having no single national address, with an online path via its website', async () => {
@@ -325,5 +329,11 @@ describe('InstitutionGuidePage', () => {
 
     expect(screen.getByText(/nu există un sediu unic național/)).toBeInTheDocument();
     expect(screen.getByText('Verifică site-ul instituției pentru depunere online.')).toBeInTheDocument();
+    // Appears twice: once in the "Online" resolution path, once in "Date de contact".
+    const links = screen.getAllByRole('link', { name: 'https://dgpci.mai.gov.ro' });
+    expect(links.length).toBeGreaterThanOrEqual(1);
+    for (const link of links) {
+      expect(link).toHaveAttribute('href', 'https://dgpci.mai.gov.ro');
+    }
   });
 });

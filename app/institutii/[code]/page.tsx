@@ -58,17 +58,25 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
 
   const resolutionPaths = [
     institution.contact_form_url
-      ? { title: 'Online', description: 'Depune cererea prin formularul online al instituției.' }
+      ? {
+          title: 'Online',
+          description: 'Depune cererea prin formularul online al instituției.',
+          href: institution.contact_form_url,
+        }
       : institution.website_url
-        ? { title: 'Online', description: 'Verifică site-ul instituției pentru depunere online.' }
+        ? {
+            title: 'Online',
+            description: 'Verifică site-ul instituției pentru depunere online.',
+            href: institution.website_url,
+          }
         : null,
     institution.phone
-      ? { title: 'Telefon', description: `Sună la ${institution.phone} pentru îndrumare.` }
+      ? { title: 'Telefon', description: `Sună la ${institution.phone} pentru îndrumare.`, href: null }
       : null,
     institution.address
-      ? { title: 'În persoană', description: `Depune cererea la sediul: ${institution.address}.` }
+      ? { title: 'În persoană', description: `Depune cererea la sediul: ${institution.address}.`, href: null }
       : null,
-  ].filter((path): path is { title: string; description: string } => path !== null);
+  ].filter((path): path is { title: string; description: string; href: string | null } => path !== null);
 
   const hasResolutionPath = resolutionPaths.length > 0;
 
@@ -162,6 +170,16 @@ export default async function InstitutionGuidePage(props: PageProps<'/institutii
             <div key={path.title} className="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
               <h2 className="font-title-md text-title-md text-on-surface mb-space-xs">{path.title}</h2>
               <p className="font-body-sm text-body-sm text-on-surface-variant">{path.description}</p>
+              {path.href && (
+                <a
+                  href={path.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block mt-space-xs text-secondary underline underline-offset-2 font-body-sm text-body-sm break-all"
+                >
+                  {path.href}
+                </a>
+              )}
             </div>
           ))}
         </div>
