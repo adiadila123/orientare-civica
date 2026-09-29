@@ -6,14 +6,22 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Institution } from '@/lib/types';
 
-// A small circular dot instead of Leaflet's default pin+shadow image —
-// matches the app's minimalist design system better than the stock icon.
+// A teardrop pin matching the familiar Google Maps marker shape/color,
+// as an inline SVG so it needs no external image asset.
 const defaultIcon = L.divIcon({
   className: 'institution-marker',
-  html: '<span class="institution-marker-dot" aria-hidden="true"></span>',
-  iconSize: [16, 16],
-  iconAnchor: [8, 8],
-  popupAnchor: [0, -10],
+  html: `
+    <svg width="27" height="41" viewBox="0 0 27 41" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path
+        d="M13.5 0C6.04 0 0 6.04 0 13.5 0 23.63 13.5 41 13.5 41S27 23.63 27 13.5C27 6.04 20.96 0 13.5 0z"
+        fill="#EA4335"
+      />
+      <circle cx="13.5" cy="13.5" r="5.5" fill="#ffffff" />
+    </svg>
+  `,
+  iconSize: [27, 41],
+  iconAnchor: [13.5, 41],
+  popupAnchor: [0, -36],
 });
 
 const BUCHAREST_CENTER: [number, number] = [44.4325, 26.1039];
@@ -66,7 +74,7 @@ export function InstitutionsMap({ institutions }: InstitutionsMapProps) {
       <MapContainer
         center={BUCHAREST_CENTER}
         zoom={DEFAULT_ZOOM}
-        scrollWheelZoom={false}
+        scrollWheelZoom
         style={{ height: '500px', width: '100%', borderRadius: 'var(--radius-xl)' }}
       >
         <LayersControl position="topright">
