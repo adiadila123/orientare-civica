@@ -41,7 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -232,7 +232,8 @@ fun MapScreen(vm: AppViewModel, onOpenInstitution: (String) -> Unit) {
 
     Box(Modifier.fillMaxSize()) {
         AndroidView(
-            modifier = Modifier.fillMaxSize(),
+            // Harta nu are voie să se deseneze peste bara de stare.
+            modifier = Modifier.fillMaxSize().clipToBounds(),
             factory = { ctx ->
                 MapView(ctx).apply {
                     setTileSource(TileSourceFactory.MAPNIK)

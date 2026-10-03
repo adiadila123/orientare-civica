@@ -1,5 +1,13 @@
 package ro.undemerg.app.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -46,6 +54,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -194,6 +205,8 @@ private fun HowItWorks() {
 fun TriageScreen(vm: AppViewModel, onOpenInstitution: (String) -> Unit) {
     val state by vm.triage.collectAsState()
     val showHome = state.result == null && !state.loading
+    var lastResult by remember { mutableStateOf<ro.undemerg.app.data.TriageResponse?>(null) }
+    if (state.result != null) lastResult = state.result
 
     Column(
         modifier = Modifier
@@ -255,7 +268,12 @@ fun TriageScreen(vm: AppViewModel, onOpenInstitution: (String) -> Unit) {
         }
         state.error?.let { ErrorBanner(it, onRetry = vm::analyze) }
 
-        if (showHome) {
+        AnimatedVisibility(
+            visible = showHome,
+            enter = fadeIn(tween(240)) + expandVertically(tween(240, easing = FastOutSlowInEasing)),
+            exit = fadeOut(tween(140)) + shrinkVertically(tween(180, easing = FastOutSlowInEasing)),
+        ) {
+          Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
             SectionTitle("Alege un subiect")
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 Topics.chunked(2).forEach { pair ->
@@ -268,17 +286,28 @@ fun TriageScreen(vm: AppViewModel, onOpenInstitution: (String) -> Unit) {
             }
             SectionTitle("Cum funcționează")
             HowItWorks()
+          }
         }
 
-        state.result?.let { result ->
-            TriageResultView(result, onOpenInstitution)
-            Button(
-                onClick = vm::saveCurrentResult,
-                enabled = state.savedId == null,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
-            ) {
-                Icon(Icons.Filled.FolderOpen, contentDescription = null)
-                Text(if (state.savedId == null) "  Salvează în Dosarele mele" else "  Salvat pe telefon")
+        AnimatedVisibility(
+            visible = state.result != null,
+            enter = fadeIn(tween(300)) + expandVertically(tween(300, easing = FastOutSlowInEasing)),
+            exit = fadeOut(tween(140)) + shrinkVertically(tween(180)),
+        ) {
+            // Păstrăm ultimul rezultat în timpul animației de ieșire, ca să nu sară conținutul.
+            val result = state.result ?: lastResult
+            if (result != null) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
+                    TriageResultView(result, onOpenInstitution)
+                    Button(
+                        onClick = vm::saveCurrentResult,
+                        enabled = state.savedId == null,
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+                    ) {
+                        Icon(Icons.Filled.FolderOpen, contentDescription = null)
+                        Text(if (state.savedId == null) "  Salvează în Dosarele mele" else "  Salvat pe telefon")
+                    }
+                }
             }
         }
     }

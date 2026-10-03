@@ -1,5 +1,12 @@
 package ro.undemerg.app.ui
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FolderOpen
@@ -95,15 +102,40 @@ fun UndeMergApp(vm: AppViewModel = viewModel()) {
             }
         },
     ) { padding ->
-        NavHost(nav, startDestination = TriageRoute, modifier = Modifier.padding(padding)) {
+        // Mișcare cu sens: taburile se schimbă prin estompare ușoară, detaliile glisează
+        // lateral (înainte = dreapta→stânga, înapoi = invers). Intrarea e mai lentă decât ieșirea.
+        val enter = tween<Float>(durationMillis = 260, easing = FastOutSlowInEasing)
+        val exit = tween<Float>(durationMillis = 160, easing = FastOutSlowInEasing)
+        val slideEnter = tween<androidx.compose.ui.unit.IntOffset>(durationMillis = 280, easing = FastOutSlowInEasing)
+        val slideExit = tween<androidx.compose.ui.unit.IntOffset>(durationMillis = 200, easing = FastOutSlowInEasing)
+
+        NavHost(
+            nav,
+            startDestination = TriageRoute,
+            modifier = Modifier.padding(padding),
+            enterTransition = { fadeIn(enter) + slideInVertically(tween(260, easing = FastOutSlowInEasing)) { it / 40 } },
+            exitTransition = { fadeOut(exit) },
+            popEnterTransition = { fadeIn(enter) },
+            popExitTransition = { fadeOut(exit) },
+        ) {
             composable<TriageRoute> { TriageScreen(vm, openInstitution) }
             composable<InstitutionsRoute> { InstitutionsScreen(vm, openInstitution) }
             composable<MapRoute> { MapScreen(vm, openInstitution) }
             composable<RecordsRoute> { RecordsScreen(vm) { nav.navigate(RecordRoute(it)) } }
-            composable<InstitutionRoute> { entry ->
+            composable<InstitutionRoute>(
+                enterTransition = { slideInHorizontally(slideEnter) { it / 5 } + fadeIn(enter) },
+                exitTransition = { fadeOut(exit) },
+                popEnterTransition = { fadeIn(enter) },
+                popExitTransition = { slideOutHorizontally(slideExit) { it / 5 } + fadeOut(exit) },
+            ) { entry ->
                 InstitutionDetailScreen(vm, entry.toRoute<InstitutionRoute>().code)
             }
-            composable<RecordRoute> { entry ->
+            composable<RecordRoute>(
+                enterTransition = { slideInHorizontally(slideEnter) { it / 5 } + fadeIn(enter) },
+                exitTransition = { fadeOut(exit) },
+                popEnterTransition = { fadeIn(enter) },
+                popExitTransition = { slideOutHorizontally(slideExit) { it / 5 } + fadeOut(exit) },
+            ) { entry ->
                 RecordDetailScreen(vm, entry.toRoute<RecordRoute>().id, openInstitution)
             }
         }
