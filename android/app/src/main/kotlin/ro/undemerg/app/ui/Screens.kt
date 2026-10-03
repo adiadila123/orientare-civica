@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import java.text.DateFormat
 import java.util.Date
+import java.util.Locale
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -175,7 +176,7 @@ private fun InstitutionCard(institution: Institution, onClick: () -> Unit) {
                 Text(institution.name, style = MaterialTheme.typography.titleSmall)
                 institution.category?.let {
                     Text(
-                        it.replaceFirstChar { c -> c.uppercase() },
+                        categoryLabel(it),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
                     )
@@ -200,7 +201,7 @@ fun InstitutionsScreen(vm: AppViewModel, onOpenInstitution: (String) -> Unit) {
         else state.items.filter {
             it.name.lowercase().contains(q) ||
                 it.code.lowercase().contains(q) ||
-                (it.category?.lowercase()?.contains(q) ?: false)
+                (it.category?.let { c -> categoryLabel(c).lowercase().contains(q) } ?: false)
         }
     }
 
@@ -252,7 +253,7 @@ fun InstitutionDetailScreen(vm: AppViewModel, code: String) {
         } else {
             ScreenHeader(institution.name)
             institution.category?.let {
-                InfoPill(Icons.Filled.AccountBalance, it.replaceFirstChar { c -> c.uppercase() },
+                InfoPill(Icons.Filled.AccountBalance, categoryLabel(it),
                     container = MaterialTheme.colorScheme.primaryContainer,
                     content = MaterialTheme.colorScheme.onPrimaryContainer)
             }
@@ -287,7 +288,7 @@ fun MapScreen(vm: AppViewModel, onOpenInstitution: (String) -> Unit) {
                 MapView(ctx).apply {
                     setTileSource(TileSourceFactory.MAPNIK)
                     setMultiTouchControls(true)
-                    controller.setZoom(6.5)
+                    controller.setZoom(7.3)
                     controller.setCenter(GeoPoint(45.9432, 24.9668)) // centrul României
                 }
             },
@@ -344,7 +345,7 @@ private fun marker(map: MapView, institution: Institution, onOpen: (String) -> U
 @Composable
 fun RecordsScreen(vm: AppViewModel, onOpenRecord: (String) -> Unit) {
     val records by vm.records.collectAsState()
-    val dateFormat = remember { DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT) }
+    val dateFormat = remember { DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, Locale("ro", "RO")) }
 
     Column(
         Modifier.fillMaxSize().padding(ScreenPadding),

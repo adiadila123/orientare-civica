@@ -60,6 +60,25 @@ fun Context.open(uri: String, action: String = Intent.ACTION_VIEW) {
 
 // ---------- Texte și etichete ----------
 
+private val CategoryLabels = mapOf(
+    "fiscal" to "Fiscal",
+    "energie" to "Energie",
+    "telecomunicatii" to "Telecomunicații",
+    "protectia_consumatorului" to "Protecția consumatorului",
+    "ombudsman" to "Avocatul Poporului",
+    "sanatate" to "Sănătate",
+    "ordine_publica" to "Ordine publică",
+    "discriminare" to "Discriminare",
+    "circulatie_rutiera" to "Circulație rutieră",
+    "munca" to "Muncă",
+    "administratie_locala" to "Administrație locală",
+)
+
+/** Transformă cheia din baza de date într-o etichetă citibilă în română. */
+fun categoryLabel(raw: String): String =
+    CategoryLabels[raw.lowercase()]
+        ?: raw.replace('_', ' ').replaceFirstChar { it.uppercase() }
+
 private fun channelLabel(channel: String) = when (channel) {
     "online" -> "Online"
     "telefon" -> "Telefon"
