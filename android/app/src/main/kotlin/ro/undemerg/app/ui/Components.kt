@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -17,6 +20,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.Balance
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.CellTower
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.HealthAndSafety
+import androidx.compose.material.icons.filled.LocalPolice
+import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Work
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
@@ -357,13 +372,13 @@ fun FlowPills(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun InstitutionContact(institution: Institution) {
+fun InstitutionContact(institution: Institution, showAddress: Boolean = true, showWait: Boolean = true) {
     val context = LocalContext.current
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-        institution.address?.let {
+        if (showAddress) institution.address?.let {
             Text(it, style = MaterialTheme.typography.bodyLarge)
         }
-        institution.wait_time_minutes?.let {
+        if (showWait) institution.wait_time_minutes?.let {
             InfoPill(Icons.Filled.Schedule, "Așteptare estimată: $it min")
         }
         @OptIn(ExperimentalLayoutApi::class)
@@ -401,3 +416,87 @@ fun InstitutionContact(institution: Institution) {
         }
     }
 }
+
+
+// ---------- Domenii: iconiță + culoare per categorie ----------
+
+/** Aspectul unui domeniu (fiscal, energie…), folosit consecvent în liste, detalii și hartă. */
+data class CategoryStyle(val icon: ImageVector, val light: Color, val dark: Color)
+
+private val DefaultCategory = CategoryStyle(Icons.Filled.AccountBalance, Color(0xFF0369A1), Color(0xFF7DD3FC))
+
+private val CategoryStyles = mapOf(
+    "fiscal" to CategoryStyle(Icons.Filled.Payments, Color(0xFF0F766E), Color(0xFF5EEAD4)),
+    "energie" to CategoryStyle(Icons.Filled.Bolt, Color(0xFFB45309), Color(0xFFFCD34D)),
+    "telecomunicatii" to CategoryStyle(Icons.Filled.CellTower, Color(0xFF4338CA), Color(0xFFA5B4FC)),
+    "protectia_consumatorului" to CategoryStyle(Icons.Filled.ShoppingCart, Color(0xFFBE123C), Color(0xFFFDA4AF)),
+    "ombudsman" to CategoryStyle(Icons.Filled.Balance, Color(0xFF6D28D9), Color(0xFFC4B5FD)),
+    "sanatate" to CategoryStyle(Icons.Filled.HealthAndSafety, Color(0xFF15803D), Color(0xFF86EFAC)),
+    "ordine_publica" to CategoryStyle(Icons.Filled.LocalPolice, Color(0xFF1D4ED8), Color(0xFF93C5FD)),
+    "discriminare" to CategoryStyle(Icons.Filled.Groups, Color(0xFF475569), Color(0xFFCBD5E1)),
+    "circulatie_rutiera" to CategoryStyle(Icons.Filled.DirectionsCar, Color(0xFF15803D), Color(0xFF86EFAC)),
+    "munca" to CategoryStyle(Icons.Filled.Work, Color(0xFF6D28D9), Color(0xFFC4B5FD)),
+    "administratie_locala" to CategoryStyle(Icons.Filled.AccountBalance, Color(0xFF0369A1), Color(0xFF7DD3FC)),
+)
+
+fun categoryStyle(category: String?): CategoryStyle =
+    category?.let { CategoryStyles[it.lowercase()] } ?: DefaultCategory
+
+/** Iconița unui domeniu într-un cerc tintat cu culoarea lui. */
+@Composable
+fun CategoryBadge(category: String?, modifier: Modifier = Modifier, size: Int = 44) {
+    val style = categoryStyle(category)
+    val tint = if (isSystemInDarkTheme()) style.dark else style.light
+    Box(modifier.size(size.dp), contentAlignment = Alignment.Center) {
+        Surface(shape = CircleShape, color = tint.copy(alpha = 0.16f), modifier = Modifier.size(size.dp)) {}
+        Icon(style.icon, contentDescription = null, tint = tint, modifier = Modifier.size((size * 0.55f).dp))
+    }
+}
+
+// ---------- Rânduri de detalii ----------
+
+/** Rând cu iconiță, etichetă și valoare; devine atingibil dacă are `onClick`. */
+@Composable
+fun DetailRow(icon: ImageVector, label: String, value: String, onClick: (() -> Unit)? = null) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .heightIn(min = 60.dp)
+            .padding(horizontal = Spacing.md, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+        Column(Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, style = MaterialTheme.typography.bodyLarge)
+        }
+        if (onClick != null) {
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+/** Card care grupează rânduri, separate printr-o linie fină. */
+@Composable
+fun GroupedCard(title: String? = null, content: @Composable () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        if (title != null) SectionTitle(title)
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            modifier = Modifier.fillMaxWidth(),
+        ) { content() }
+    }
+}
+
+@Composable
+fun RowDivider() = HorizontalDivider(
+    color = MaterialTheme.colorScheme.outlineVariant,
+    modifier = Modifier.padding(start = 54.dp),
+)

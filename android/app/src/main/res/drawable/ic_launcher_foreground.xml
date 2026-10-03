@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Pin de hartă -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M54,22C41.3,22 31,32.3 31,45C31,61.5 54,86 54,86C54,86 77,61.5 77,45C77,32.3 66.7,22 54,22Z" />
+    <!-- Clădire de instituție în pin -->
+    <path
+        android:fillColor="#FF0B3A5B"
+        android:pathData="M54,31L67,38.5L67,40.5L41,40.5L41,38.5Z" />
+    <path
+        android:fillColor="#FF0B3A5B"
+        android:pathData="M44,43h4v10h-4z" />
+    <path
+        android:fillColor="#FF0B3A5B"
+        android:pathData="M52,43h4v10h-4z" />
+    <path
+        android:fillColor="#FF0B3A5B"
+        android:pathData="M60,43h4v10h-4z" />
+    <path
+        android:fillColor="#FF0B3A5B"
+        android:pathData="M41,55h26v3h-26z" />
+</vector>

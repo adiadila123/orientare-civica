@@ -20,6 +20,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.Balance
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Search
@@ -65,7 +72,7 @@ private fun InstitutionCard(institution: Institution, onClick: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconBadge(Icons.Filled.AccountBalance)
+            CategoryBadge(institution.category)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(institution.name, style = MaterialTheme.typography.titleSmall)
                 institution.category?.let {
@@ -137,6 +144,7 @@ fun InstitutionsScreen(vm: AppViewModel, onOpenInstitution: (String) -> Unit) {
 fun InstitutionDetailScreen(vm: AppViewModel, code: String) {
     val state by vm.institutions.collectAsState()
     val institution = state.items.firstOrNull { it.code.equals(code, ignoreCase = true) }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(ScreenPadding),
@@ -144,19 +152,93 @@ fun InstitutionDetailScreen(vm: AppViewModel, code: String) {
     ) {
         if (institution == null) {
             EmptyState(Icons.Filled.AccountBalance, "Instituția nu a fost găsită", "Întoarce-te la listă și încearcă din nou.")
-        } else {
-            ScreenHeader(institution.name)
-            institution.category?.let {
-                InfoPill(Icons.Filled.AccountBalance, categoryLabel(it),
-                    container = MaterialTheme.colorScheme.primaryContainer,
-                    content = MaterialTheme.colorScheme.onPrimaryContainer)
+            return@Column
+        }
+
+        // Antet: domeniul, numele și descrierea.
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+            shape = MaterialTheme.shapes.large,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                CategoryBadge(institution.category, size = 56)
+                Text(
+                    institution.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                institution.category?.let {
+                    InfoPill(
+                        categoryStyle(it).icon,
+                        categoryLabel(it),
+                        container = MaterialTheme.colorScheme.surfaceContainerLowest,
+                        content = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+                institution.description?.let {
+                    Text(it, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                }
             }
-            institution.description?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
-            institution.associated_court?.let {
-                Text("Instanță competentă: $it", style = MaterialTheme.typography.bodyMedium)
+        }
+
+        // Acțiuni rapide.
+        InstitutionContact(institution, showAddress = false, showWait = false)
+
+        val hasContactRows = institution.address != null || institution.phone != null ||
+            institution.email != null || institution.website_url != null
+        if (hasContactRows) {
+            GroupedCard("Contact") {
+                val rows = buildList<@Composable () -> Unit> {
+                    institution.address?.let { address ->
+                        add {
+                            DetailRow(Icons.Filled.Place, "Adresă", address) {
+                                context.open("geo:0,0?q=${android.net.Uri.encode(address)}")
+                            }
+                        }
+                    }
+                    institution.phone?.let { phone ->
+                        add { DetailRow(Icons.Filled.Phone, "Telefon", phone) { context.open("tel:$phone", android.content.Intent.ACTION_DIAL) } }
+                    }
+                    institution.email?.let { email ->
+                        add { DetailRow(Icons.Filled.Email, "E-mail", email) { context.open("mailto:$email", android.content.Intent.ACTION_SENDTO) } }
+                    }
+                    institution.website_url?.let { url ->
+                        add { DetailRow(Icons.Filled.Public, "Site", url.removePrefix("https://").removePrefix("http://").trimEnd('/')) { context.open(url) } }
+                    }
+                }
+                rows.forEachIndexed { index, row ->
+                    if (index > 0) RowDivider()
+                    row()
+                }
             }
-            SectionTitle("Contact")
-            InstitutionContact(institution)
+        }
+
+        val infoRows = buildList<@Composable () -> Unit> {
+            institution.wait_time_minutes?.let { add { DetailRow(Icons.Filled.Schedule, "Timp de așteptare estimat", "$it minute") } }
+            institution.associated_court?.let { add { DetailRow(Icons.Filled.Balance, "Instanță competentă", it) } }
+        }
+        if (infoRows.isNotEmpty()) {
+            GroupedCard("Bine de știut") {
+                infoRows.forEachIndexed { index, row ->
+                    if (index > 0) RowDivider()
+                    row()
+                }
+            }
+        }
+
+        val paymentRows = buildList<@Composable () -> Unit> {
+            institution.iban?.let { add { DetailRow(Icons.Filled.Payments, "IBAN", it) } }
+            institution.cod_venit?.let { add { DetailRow(Icons.Filled.Payments, "Cod venit", it) } }
+            institution.cui?.let { add { DetailRow(Icons.Filled.Payments, "CUI", it) } }
+        }
+        if (paymentRows.isNotEmpty()) {
+            GroupedCard("Date pentru plăți") {
+                paymentRows.forEachIndexed { index, row ->
+                    if (index > 0) RowDivider()
+                    row()
+                }
+            }
         }
     }
 }
