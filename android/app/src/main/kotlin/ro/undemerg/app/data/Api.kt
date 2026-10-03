@@ -4,6 +4,7 @@ import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -46,6 +47,50 @@ object Api {
             kotlinx.serialization.builtins.ListSerializer(Institution.serializer()),
             execute(request),
         )
+    }
+
+
+    /** Caută o localitate în OpenStreetMap (Nominatim) și întoarce coordonatele ei. */
+    suspend fun geocode(localitate: String, judet: String): LatLon? {
+        val name = Localities.searchName(localitate)
+        val query = if (judet == "București") "$name, România" else "$name, $judet, România"
+        return nominatim("q" to query)
+    }
+
+    /** Centrul unui județ întreg. */
+    suspend fun geocodeCounty(judet: String): LatLon? = nominatim("county" to judet)
+
+    private suspend fun nominatim(param: Pair<String, String>): LatLon? = withContext(Dispatchers.IO) {
+        val url = "https://nominatim.openstreetmap.org/search".toHttpUrl().newBuilder()
+            .addQueryParameter(param.first, param.second)
+            .addQueryParameter("format", "json")
+            .addQueryParameter("limit", "1")
+            .addQueryParameter("countrycodes", "ro")
+            .build()
+        val request = Request.Builder()
+            .url(url)
+            // Politica Nominatim cere un User-Agent care identifică aplicația.
+            .header("User-Agent", "UndeMerg-Android/${BuildConfig.VERSION_NAME}")
+            .header("Accept-Language", "ro")
+            .get()
+            .build()
+        val hits = json.decodeFromString(
+            kotlinx.serialization.builtins.ListSerializer(NominatimHit.serializer()),
+            execute(request),
+        )
+        hits.firstOrNull()?.let { hit ->
+            val lat = hit.lat.toDoubleOrNull()
+            val lon = hit.lon.toDoubleOrNull()
+            if (lat != null && lon != null) LatLon(lat, lon) else null
+        }
+    }
+
+    suspend fun nearestTownhall(lat: Double, lon: Double): TownhallResult = withContext(Dispatchers.IO) {
+        val request = Request.Builder()
+            .url("${BuildConfig.API_BASE_URL}/api/nearest-townhall?lat=$lat&lon=$lon")
+            .get()
+            .build()
+        json.decodeFromString(TownhallResult.serializer(), execute(request))
     }
 
     private fun execute(request: Request): String {

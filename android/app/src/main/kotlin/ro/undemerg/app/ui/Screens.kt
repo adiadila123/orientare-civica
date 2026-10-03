@@ -44,17 +44,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
-import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.Marker
 import ro.undemerg.app.data.Institution
 
 private val ScreenPadding = PaddingValues(horizontal = Spacing.md, vertical = Spacing.md)
@@ -167,81 +160,6 @@ fun InstitutionDetailScreen(vm: AppViewModel, code: String) {
         }
     }
 }
-
-@Composable
-fun MapScreen(vm: AppViewModel, onOpenInstitution: (String) -> Unit) {
-    val state by vm.institutions.collectAsState()
-    val context = LocalContext.current
-    remember {
-        // OSM cere un user agent; cache-ul de tile-uri merge în storage-ul aplicației.
-        Configuration.getInstance().apply {
-            userAgentValue = context.packageName
-            osmdroidBasePath = context.filesDir
-            osmdroidTileCache = context.cacheDir.resolve("osm")
-        }
-    }
-    val withCoordinates = state.items.filter { it.latitude != null && it.longitude != null }
-
-    Box(Modifier.fillMaxSize()) {
-        AndroidView(
-            modifier = Modifier.fillMaxSize(),
-            factory = { ctx ->
-                MapView(ctx).apply {
-                    setTileSource(TileSourceFactory.MAPNIK)
-                    setMultiTouchControls(true)
-                    controller.setZoom(7.3)
-                    controller.setCenter(GeoPoint(45.9432, 24.9668)) // centrul României
-                }
-            },
-            update = { map ->
-                map.overlays.clear()
-                withCoordinates.forEach { institution -> map.overlays.add(marker(map, institution, onOpenInstitution)) }
-                map.invalidate()
-            },
-        )
-        Surface(
-            shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.surfaceContainerLowest,
-            tonalElevation = 3.dp,
-            shadowElevation = 4.dp,
-            modifier = Modifier.align(Alignment.TopStart).padding(Spacing.md),
-        ) {
-            Column(Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm)) {
-                Text("Hartă instituții", style = MaterialTheme.typography.titleSmall)
-                when {
-                    state.loading -> Text("Se încarcă…", style = MaterialTheme.typography.labelMedium)
-                    state.error != null -> Text(
-                        state.error!!,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                    else -> Text(
-                        "${withCoordinates.size} locații · atinge un marcaj pentru detalii",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (state.error != null) {
-                    OutlinedButton(onClick = vm::loadInstitutions, modifier = Modifier.heightIn(min = MinTouch)) {
-                        Text("Reîncearcă")
-                    }
-                }
-            }
-        }
-    }
-}
-
-private fun marker(map: MapView, institution: Institution, onOpen: (String) -> Unit) =
-    Marker(map).apply {
-        position = GeoPoint(institution.latitude!!, institution.longitude!!)
-        title = institution.name
-        snippet = institution.address
-        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-        setOnMarkerClickListener { m, _ ->
-            if (m.isInfoWindowShown) onOpen(institution.code) else m.showInfoWindow()
-            true
-        }
-    }
 
 @Composable
 fun RecordsScreen(vm: AppViewModel, onOpenRecord: (String) -> Unit) {
