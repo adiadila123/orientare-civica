@@ -6,7 +6,13 @@ import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -41,6 +47,7 @@ private val tabs = listOf(
     Tab(RecordsRoute, "Dosare", Icons.Filled.FolderOpen, RecordsRoute::class),
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UndeMergApp(vm: AppViewModel = viewModel()) {
     val nav = rememberNavController()
@@ -49,7 +56,27 @@ fun UndeMergApp(vm: AppViewModel = viewModel()) {
 
     val openInstitution: (String) -> Unit = { nav.navigate(InstitutionRoute(it)) }
 
+    // Ecranele de detaliu nu sunt taburi: au bară de sus cu buton de întoarcere.
+    val detailTitle = when {
+        destination?.hasRoute<InstitutionRoute>() == true -> "Instituție"
+        destination?.hasRoute<RecordRoute>() == true -> "Analiză salvată"
+        else -> null
+    }
+
     Scaffold(
+        topBar = {
+            if (detailTitle != null) {
+                TopAppBar(
+                    title = { Text(detailTitle, style = MaterialTheme.typography.titleMedium) },
+                    navigationIcon = {
+                        IconButton(onClick = { nav.popBackStack() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Înapoi")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
+                )
+            }
+        },
         bottomBar = {
             NavigationBar {
                 tabs.forEach { tab ->
