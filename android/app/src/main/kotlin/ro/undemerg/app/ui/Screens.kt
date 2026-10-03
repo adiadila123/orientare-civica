@@ -1,27 +1,39 @@
 package ro.undemerg.app.ui
 
-import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -30,6 +42,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -43,18 +56,28 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import ro.undemerg.app.data.Institution
 
-private val screenPadding = Modifier.padding(16.dp)
+private val ScreenPadding = PaddingValues(horizontal = Spacing.md, vertical = Spacing.md)
 
+private val SuggestedProblems = listOf(
+    "Am primit o amendă de la Poliția Locală și nu sunt de acord",
+    "Factura la curent este mult prea mare",
+    "Am nevoie de cazier judiciar pentru angajare",
+    "Am o problemă cu un produs cumpărat online",
+)
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TriageScreen(vm: AppViewModel, onOpenInstitution: (String) -> Unit) {
     val state by vm.triage.collectAsState()
 
     Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).then(screenPadding),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(ScreenPadding),
+        verticalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
-        Text("Unde merg?", style = MaterialTheme.typography.headlineMedium)
-        Text("Descrie problema ta și îți spun la ce instituție să te adresezi, ce documente îți trebuie și ce pași urmezi.")
+        ScreenHeader(
+            "Unde merg?",
+            "Descrie problema ta și îți spun la ce instituție te adresezi, ce documente îți trebuie și ce pași urmezi.",
+        )
 
         OutlinedTextField(
             value = state.description,
@@ -62,33 +85,107 @@ fun TriageScreen(vm: AppViewModel, onOpenInstitution: (String) -> Unit) {
             label = { Text("Ce problemă ai?") },
             supportingText = { Text("${state.description.length}/$MAX_DESCRIPTION_LENGTH") },
             minLines = 4,
+            shape = MaterialTheme.shapes.medium,
             modifier = Modifier.fillMaxWidth(),
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
+        if (state.description.isBlank() && state.result == null) {
+            Text(
+                "Sau alege un exemplu",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+            ) {
+                SuggestedProblems.forEach { suggestion ->
+                    AssistChip(
+                        onClick = { vm.onDescriptionChange(suggestion) },
+                        label = { Text(suggestion, style = MaterialTheme.typography.labelMedium) },
+                        modifier = Modifier.heightIn(min = MinTouch),
+                    )
+                }
+            }
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             Button(
                 onClick = vm::analyze,
                 enabled = state.description.isNotBlank() && !state.loading,
-            ) { Text("Analizează") }
+                modifier = Modifier.weight(1f).heightIn(min = 52.dp),
+            ) {
+                Text("Analizează problema")
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    modifier = Modifier.padding(start = Spacing.sm),
+                )
+            }
             if (state.result != null || state.error != null) {
-                OutlinedButton(onClick = vm::resetTriage) { Text("Problemă nouă") }
+                OutlinedButton(onClick = vm::resetTriage, modifier = Modifier.heightIn(min = 52.dp)) {
+                    Text("Nouă")
+                }
             }
         }
 
         if (state.loading) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                CircularProgressIndicator(Modifier.padding(4.dp))
-                Text("Analizez problema…", Modifier.padding(top = 8.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                LinearProgressIndicator(Modifier.fillMaxWidth())
+                Text(
+                    "Analizez problema… poate dura câteva secunde.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
-        state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        state.error?.let { ErrorBanner(it, onRetry = vm::analyze) }
 
         state.result?.let { result ->
             TriageResultView(result, onOpenInstitution)
             Button(
                 onClick = vm::saveCurrentResult,
                 enabled = state.savedId == null,
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text(if (state.savedId == null) "Salvează în Dosarele mele" else "Salvat pe telefon") }
+                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+            ) {
+                Icon(Icons.Filled.FolderOpen, contentDescription = null)
+                Text(
+                    if (state.savedId == null) "  Salvează în Dosarele mele" else "  Salvat pe telefon",
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun InstitutionCard(institution: Institution, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp),
+    ) {
+        Row(
+            Modifier.padding(Spacing.md),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconBadge(Icons.Filled.AccountBalance)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(institution.name, style = MaterialTheme.typography.titleSmall)
+                institution.category?.let {
+                    Text(
+                        it.replaceFirstChar { c -> c.uppercase() },
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -107,31 +204,34 @@ fun InstitutionsScreen(vm: AppViewModel, onOpenInstitution: (String) -> Unit) {
         }
     }
 
-    Column(Modifier.fillMaxSize().then(screenPadding), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Instituții", style = MaterialTheme.typography.headlineMedium)
+    Column(
+        Modifier.fillMaxSize().padding(ScreenPadding),
+        verticalArrangement = Arrangement.spacedBy(Spacing.md),
+    ) {
+        ScreenHeader("Instituții", "Găsește rapid datele de contact ale instituțiilor publice.")
         OutlinedTextField(
             value = query,
             onValueChange = { query = it },
-            label = { Text("Caută instituție") },
+            label = { Text("Caută după nume sau domeniu") },
+            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
             singleLine = true,
+            shape = MaterialTheme.shapes.medium,
             modifier = Modifier.fillMaxWidth(),
         )
         when {
-            state.loading -> CircularProgressIndicator()
-            state.error != null -> {
-                Text(state.error!!, color = MaterialTheme.colorScheme.error)
-                OutlinedButton(onClick = vm::loadInstitutions) { Text("Reîncearcă") }
-            }
-            else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            state.loading -> LinearProgressIndicator(Modifier.fillMaxWidth())
+            state.error != null -> ErrorBanner(state.error!!, onRetry = vm::loadInstitutions)
+            filtered.isEmpty() -> EmptyState(
+                Icons.Filled.Search,
+                "Nicio instituție găsită",
+                "Încearcă un alt cuvânt, de exemplu „fiscal” sau „primărie”.",
+            )
+            else -> LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+                contentPadding = PaddingValues(bottom = Spacing.md),
+            ) {
                 items(filtered, key = { it.id }) { institution ->
-                    Card(Modifier.fillMaxWidth().clickable { onOpenInstitution(institution.code) }) {
-                        Column(Modifier.padding(16.dp)) {
-                            Text(institution.name, style = MaterialTheme.typography.titleMedium)
-                            institution.category?.let {
-                                Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                            }
-                        }
-                    }
+                    InstitutionCard(institution) { onOpenInstitution(institution.code) }
                 }
             }
         }
@@ -144,16 +244,23 @@ fun InstitutionDetailScreen(vm: AppViewModel, code: String) {
     val institution = state.items.firstOrNull { it.code.equals(code, ignoreCase = true) }
 
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).then(screenPadding),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(ScreenPadding),
+        verticalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
         if (institution == null) {
-            Text("Instituția nu a fost găsită.")
+            EmptyState(Icons.Filled.AccountBalance, "Instituția nu a fost găsită", "Întoarce-te la listă și încearcă din nou.")
         } else {
-            Text(institution.name, style = MaterialTheme.typography.headlineMedium)
-            institution.category?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
-            institution.description?.let { Text(it) }
-            institution.associated_court?.let { Text("Instanță competentă: $it") }
+            ScreenHeader(institution.name)
+            institution.category?.let {
+                InfoPill(Icons.Filled.AccountBalance, it.replaceFirstChar { c -> c.uppercase() },
+                    container = MaterialTheme.colorScheme.primaryContainer,
+                    content = MaterialTheme.colorScheme.onPrimaryContainer)
+            }
+            institution.description?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
+            institution.associated_court?.let {
+                Text("Instanță competentă: $it", style = MaterialTheme.typography.bodyMedium)
+            }
+            SectionTitle("Contact")
             InstitutionContact(institution)
         }
     }
@@ -173,15 +280,7 @@ fun MapScreen(vm: AppViewModel, onOpenInstitution: (String) -> Unit) {
     }
     val withCoordinates = state.items.filter { it.latitude != null && it.longitude != null }
 
-    Column(Modifier.fillMaxSize()) {
-        if (state.loading) {
-            CircularProgressIndicator(screenPadding)
-        } else if (state.error != null) {
-            Column(screenPadding) {
-                Text(state.error!!, color = MaterialTheme.colorScheme.error)
-                OutlinedButton(onClick = vm::loadInstitutions) { Text("Reîncearcă") }
-            }
-        }
+    Box(Modifier.fillMaxSize()) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { ctx ->
@@ -198,6 +297,35 @@ fun MapScreen(vm: AppViewModel, onOpenInstitution: (String) -> Unit) {
                 map.invalidate()
             },
         )
+        Surface(
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+            tonalElevation = 3.dp,
+            shadowElevation = 4.dp,
+            modifier = Modifier.align(Alignment.TopStart).padding(Spacing.md),
+        ) {
+            Column(Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm)) {
+                Text("Hartă instituții", style = MaterialTheme.typography.titleSmall)
+                when {
+                    state.loading -> Text("Se încarcă…", style = MaterialTheme.typography.labelMedium)
+                    state.error != null -> Text(
+                        state.error!!,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    else -> Text(
+                        "${withCoordinates.size} locații · atinge un marcaj pentru detalii",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (state.error != null) {
+                    OutlinedButton(onClick = vm::loadInstitutions, modifier = Modifier.heightIn(min = MinTouch)) {
+                        Text("Reîncearcă")
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -218,29 +346,52 @@ fun RecordsScreen(vm: AppViewModel, onOpenRecord: (String) -> Unit) {
     val records by vm.records.collectAsState()
     val dateFormat = remember { DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT) }
 
-    Column(Modifier.fillMaxSize().then(screenPadding), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Dosarele mele", style = MaterialTheme.typography.headlineMedium)
-        Text("Analizele salvate rămân doar pe acest telefon.", style = MaterialTheme.typography.bodyMedium)
+    Column(
+        Modifier.fillMaxSize().padding(ScreenPadding),
+        verticalArrangement = Arrangement.spacedBy(Spacing.md),
+    ) {
+        ScreenHeader("Dosarele mele", "Analizele salvate rămân doar pe acest telefon.")
         if (records.isEmpty()) {
-            Text("Nu ai nicio analiză salvată încă.")
+            EmptyState(
+                Icons.Filled.FolderOpen,
+                "Nu ai nicio analiză salvată",
+                "După o analiză, apasă „Salvează în Dosarele mele” ca să o găsești aici.",
+            )
         }
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+            contentPadding = PaddingValues(bottom = Spacing.md),
+        ) {
             items(records, key = { it.id }) { record ->
-                Card(Modifier.fillMaxWidth().clickable { onOpenRecord(record.id) }) {
-                    Row(Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 4.dp)) {
-                        Column(Modifier.weight(1f)) {
+                Card(
+                    onClick = { onOpenRecord(record.id) },
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        Modifier.padding(start = Spacing.md, top = Spacing.sm, bottom = Spacing.sm, end = Spacing.xs),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text(
                                 record.result.institution?.name ?: record.result.institution_type,
-                                style = MaterialTheme.typography.titleMedium,
+                                style = MaterialTheme.typography.titleSmall,
                             )
-                            Text(record.description, maxLines = 2)
+                            Text(
+                                record.description,
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 2,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                             Text(
                                 dateFormat.format(Date(record.savedAtMillis)),
                                 style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                        IconButton(onClick = { vm.deleteRecord(record.id) }) {
-                            Icon(Icons.Filled.Delete, contentDescription = "Șterge")
+                        IconButton(onClick = { vm.deleteRecord(record.id) }, modifier = Modifier.heightIn(min = MinTouch)) {
+                            Icon(Icons.Filled.Delete, contentDescription = "Șterge analiza")
                         }
                     }
                 }
@@ -255,14 +406,14 @@ fun RecordDetailScreen(vm: AppViewModel, id: String, onOpenInstitution: (String)
     val record = records.firstOrNull { it.id == id }
 
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).then(screenPadding),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(ScreenPadding),
+        verticalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
         if (record == null) {
-            Text("Analiza nu mai există.")
+            EmptyState(Icons.Filled.FolderOpen, "Analiza nu mai există", "A fost ștearsă din Dosarele mele.")
         } else {
-            Text("Problema ta", style = MaterialTheme.typography.titleMedium)
-            Text(record.description)
+            SectionTitle("Problema ta")
+            Text(record.description, style = MaterialTheme.typography.bodyLarge)
             TriageResultView(record.result, onOpenInstitution)
         }
     }
